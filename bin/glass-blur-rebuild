@@ -17,8 +17,14 @@ echo "== installing (sudo)"
 sudo cmake --install build
 if [ "$($E.isEffectLoaded "$ID")" = "true" ]; then
   echo "== an older copy is still loaded in this session: log out and back in to use the new build"
+else
+  # Order matters: the stock blur must be gone before the glass effect loads, and the Plasma shell must
+  # reconnect afterwards. Loading glass first leaves it "loaded" but drawing nothing.
+  $E.unloadEffect blur >/dev/null 2>&1 || true; sleep 2
+fi
+if [ "$($E.isEffectLoaded "$ID")" = "true" ]; then :
 elif [ "$($E.loadEffect "$ID")" = "true" ]; then
-  $E.unloadEffect blur >/dev/null
+  systemctl --user restart plasma-plasmashell.service 2>/dev/null || true
   echo "== glass blur loaded, stock blur switched off. Done, no relogin needed."
 else
   echo "== installed, but KWin did not load it. Check: journalctl -b | grep -i better_blur ; is kwin-devel the same version as kwin? (rpm -q kwin kwin-devel)"

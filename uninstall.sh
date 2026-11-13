@@ -22,7 +22,7 @@ rm -f "$CONF/systemd/user/macos-theme-sync.path" "$CONF/systemd/user/macos-theme
 kwriteconfig6 --file kwinrc --group Plugins --key "${ID}Enabled" false
 kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled true
 if [ "$RELOAD" = 1 ] && command -v qdbus-qt6 >/dev/null; then
-  $E.unloadEffect "$ID" >/dev/null 2>&1; $E.loadEffect blur >/dev/null 2>&1
+  $E.unloadEffect "$ID" >/dev/null 2>&1; sleep 2; $E.loadEffect blur >/dev/null 2>&1
   qdbus-qt6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1
   systemctl --user restart plasma-plasmashell.service 2>/dev/null
 fi

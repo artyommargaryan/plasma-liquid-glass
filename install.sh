@@ -122,12 +122,15 @@ if [ "$RELOAD" = 1 ]; then
   if [ "$($E.isEffectLoaded "$ID" 2>/dev/null)" = "true" ]; then
     $E.reconfigureEffect "$ID" >/dev/null 2>&1 || true
     [ "$SKIP_EFFECT" = 0 ] && echo "An older copy of the effect is loaded: log out and back in to use the new build."
-  elif [ "$($E.loadEffect "$ID" 2>/dev/null)" = "true" ]; then
-    $E.unloadEffect blur >/dev/null 2>&1 || true; echo "glass effect loaded"
+  elif { $E.unloadEffect blur >/dev/null 2>&1 || true; sleep 2; [ "$($E.loadEffect "$ID" 2>/dev/null)" = "true" ]; }; then
+    # stock blur is unloaded first on purpose: loading glass next to it leaves glass "loaded" but drawing nothing
+    echo "glass effect loaded"
   else
+    $E.loadEffect blur >/dev/null 2>&1 || true
     warn "KWin did not load the effect. Is kwin-devel the same version as kwin? Try logging out and back in, then: journalctl -b | grep -i better_blur"
   fi
-  [ "$THEMES_DONE" = 1 ] && { systemctl --user restart plasma-plasmashell.service 2>/dev/null || warn "restart the Plasma shell (or log out and in) to see the new theme files"; }
+  # always restart the shell: it has to reconnect to the newly loaded effect, and pick up the new theme files
+  systemctl --user restart plasma-plasmashell.service 2>/dev/null || warn "restart the Plasma shell (or log out and in) to see the result"
 else
   echo "Session not reloaded (--no-reload). Log out and back in, then run: systemctl --user enable --now macos-theme-sync.path"
 fi
