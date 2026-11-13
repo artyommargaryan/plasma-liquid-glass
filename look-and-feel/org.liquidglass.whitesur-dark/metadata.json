@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [ { "Name": "plasma-liquid-glass" } ],
+        "Category": "Global Themes (Plasma 6)",
+        "Description": "Glass dock, top bar, popups and menus on the WhiteSur dark theme. Needs the glass KWin effect from plasma-liquid-glass (install.sh).",
+        "Id": "org.liquidglass.whitesur-dark",
+        "License": "GPL-3.0",
+        "Name": "Liquid Glass (WhiteSur Dark)",
+        "Website": "https://github.com/artyommargaryan/plasma-liquid-glass"
+    },
+    "X-KDE-fallbackPackage": "org.kde.breeze.desktop",
+    "X-Plasma-APIVersion": "2"
+}

@@ -99,6 +99,22 @@ else
   done
 fi
 
+# ---- 2c. Global Themes -------------------------------------------------------------------------------------------
+# Two entries for System Settings > Global Theme, registered as the light and dark theme of Plasma's Dark Mode
+# switch. Picking one (or flipping the switch) changes colours, icons and the Plasma theme; the watcher installed
+# below then brings Kvantum, GTK and the glass values in line.
+say "Installing Global Themes"
+mkdir -p "$DATA/plasma/look-and-feel" "$DATA/plasma-liquid-glass"
+for d in "$HERE"/look-and-feel/*/; do
+  n="$(basename "$d")"; rm -rf "$DATA/plasma/look-and-feel/$n"; cp -r "$d" "$DATA/plasma/look-and-feel/$n"; echo "installed $n"
+done
+if [ ! -e "$DATA/plasma-liquid-glass/previous-global-themes" ]; then
+  { echo "DefaultLightLookAndFeel=$(kreadconfig6 --file kdeglobals --group KDE --key DefaultLightLookAndFeel)"
+    echo "DefaultDarkLookAndFeel=$(kreadconfig6 --file kdeglobals --group KDE --key DefaultDarkLookAndFeel)"; } > "$DATA/plasma-liquid-glass/previous-global-themes"
+fi
+kwriteconfig6 --file kdeglobals --group KDE --key DefaultLightLookAndFeel org.liquidglass.whitesur
+kwriteconfig6 --file kdeglobals --group KDE --key DefaultDarkLookAndFeel org.liquidglass.whitesur-dark
+
 # ---- 3. scripts, autostart, light/dark sync ---------------------------------------------------------------------
 say "Installing scripts"
 mkdir -p "$BIN" "$CONF/autostart" "$CONF/systemd/user" "$DATA/applications"

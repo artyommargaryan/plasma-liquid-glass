@@ -1,0 +1,11 @@
+[kdeglobals][KDE]
+widgetStyle=kvantum
+
+[kdeglobals][General]
+ColorScheme=WhiteSurDark
+
+[kdeglobals][Icons]
+Theme=WhiteSur-dark
+
+[plasmarc][Theme]
+name=WhiteSur-dark

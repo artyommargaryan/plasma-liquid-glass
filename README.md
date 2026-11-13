@@ -53,6 +53,7 @@ What it changes:
 | Effect source | `~/.local/share/plasma-liquid-glass/kwin-effect` | — |
 | Popup and dock artwork | `~/.local/share/plasma/desktoptheme/WhiteSur{,-dark}/` | `*.pre-liquid-glass` next to each file |
 | Menu frame and menu settings of the WhiteSur Kvantum theme (light and dark) | `~/.config/Kvantum/WhiteSur/` | `*.pre-liquid-glass` next to each file |
+| Global Themes `org.liquidglass.whitesur{,-dark}`, set as the light/dark defaults | `~/.local/share/plasma/look-and-feel/`, `~/.config/kdeglobals` | previous defaults in `~/.local/share/plasma-liquid-glass/previous-global-themes` |
 | Glass settings, stock blur off | `~/.config/kwinrc` | `~/.config/kwinrc.pre-liquid-glass` |
 | `macos-theme-toggle`, `glass-blur-guard`, `glass-blur-rebuild` | `~/.local/bin/` | — |
 | Login check | `~/.config/autostart/glass-blur-guard.desktop` | — |
@@ -83,7 +84,12 @@ notification. To get glass back:
 
 Use Plasma's own Dark Mode switch, or `macos-theme-toggle [light|dark|toggle]`. Either way the colour scheme, Plasma
 theme, icons, Kvantum theme, GTK theme and the glass values change together; missing pieces are skipped with a warning.
-Plasma's switch needs two Global Themes that select `WhiteSur` and `WhiteSurDark`; the watcher fills in the rest.
+The installer adds two Global Themes, **Liquid Glass (WhiteSur Light)** and **Liquid Glass (WhiteSur Dark)**, and
+registers them as the light and dark theme of Plasma's switch; the watcher fills in the rest. You can also pick either
+one in System Settings → Colors & Themes → Global Theme. A Global Theme cannot install or enable a KWin effect, so
+these two are a front end to the installed setup, not a replacement for `install.sh`. Ticking *Desktop and window
+layout* when applying one replaces your panels with the top bar and dock (same layout as `install.sh --layout`,
+minus the bar's *Applets only* floating setting, which only the installer can set).
 
 Each mode keeps its own glass values in `~/.config/glassblurmodesrc`, so tuning done in one mode stays with that mode.
 To bind a key, add a shortcut for `macos-theme-toggle` in System Settings → Shortcuts.

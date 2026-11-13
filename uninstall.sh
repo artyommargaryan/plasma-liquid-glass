@@ -22,6 +22,16 @@ for v in WhiteSur WhiteSurDark; do
     [ -e "$p.pre-liquid-glass" ] && mv -f "$p.pre-liquid-glass" "$p" && echo "restored $p"
   done
 done
+rm -rf "$DATA/plasma/look-and-feel/org.liquidglass.whitesur" "$DATA/plasma/look-and-feel/org.liquidglass.whitesur-dark"
+PG="$DATA/plasma-liquid-glass/previous-global-themes"
+if [ -f "$PG" ]; then
+  while IFS='=' read -r k v; do
+    case "$k" in DefaultLightLookAndFeel|DefaultDarkLookAndFeel)
+      if [ -n "$v" ]; then kwriteconfig6 --file kdeglobals --group KDE --key "$k" "$v"; else kwriteconfig6 --file kdeglobals --group KDE --key "$k" --delete; fi ;;
+    esac
+  done < "$PG"
+  rm -f "$PG"; echo "Global Themes removed, previous light/dark defaults restored"
+fi
 [ "$RELOAD" = 1 ] && systemctl --user disable --now macos-theme-sync.path 2>/dev/null
 rm -f "$CONF/systemd/user/macos-theme-sync.path" "$CONF/systemd/user/macos-theme-sync.service" \
       "$CONF/autostart/glass-blur-guard.desktop" "$DATA/applications/net.local.theme-toggle.desktop" \
