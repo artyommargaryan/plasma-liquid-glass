@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # macos-theme-toggle — one-shot light/dark flip of the whole WhiteSur stack.
-# Target: KDE Plasma 6 / Wayland with the WhiteSur themes. No logout, no app restarts.
+# Target: KDE Plasma 6 / Wayland with the WhiteSur themes. No logout; the Plasma shell restarts once per switch.
 # Usage: macos-theme-toggle [light|dark|toggle|sync]   (no argument = toggle)
 #   sync = something else (Plasma's own Dark Mode switch) already changed the colour scheme;
 #          bring Kvantum, GTK, libadwaita and the glass values in line with it. Run automatically
@@ -105,5 +105,13 @@ fi
 
 # NOTE: window decoration untouched on purpose — Klassy follows the colour scheme.
 # NOTE: wallpaper untouched on purpose — WhiteSur package auto-follows via DynamicMode=0.
+
+# 7. Restart the Plasma shell when the mode really changed. Menus are drawn by Kvantum, and a running
+#    plasmashell keeps the old Kvantum theme for its global-menu popups until it restarts (bar and dock
+#    blink for a few seconds). Set MACOS_THEME_NO_SHELL_RESTART=1 to skip.
+if [ "$FROM" != "$MODE" ] && [ -z "${MACOS_THEME_NO_SHELL_RESTART:-}" ] \
+   && systemctl --user is-active -q plasma-plasmashell.service 2>/dev/null; then
+  systemctl --user restart plasma-plasmashell.service >/dev/null 2>&1 || warn "could not restart plasmashell"
+fi
 
 echo "switched to $MODE ($scheme)"
