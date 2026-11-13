@@ -4,6 +4,10 @@ A "liquid glass" look for KDE Plasma 6 on top of the [WhiteSur](https://github.c
 see-through dock, top bar and popups with lens refraction, a thin rim light, 20px corners, and separate light and
 dark tuning.
 
+| Light | Dark |
+|---|---|
+| ![Light mode: top bar, glass menu and dock](look-and-feel/org.liquidglass.whitesur/contents/previews/fullscreenpreview.jpg) | ![Dark mode: top bar, glass menu and dock](look-and-feel/org.liquidglass.whitesur-dark/contents/previews/fullscreenpreview.jpg) |
+
 ![Dock in dark mode](docs/dock-dark.png)
 
 It is made of three parts:
