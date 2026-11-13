@@ -156,5 +156,6 @@ command to remove the compiled effect from `/usr`.
 - [Better Blur DX](https://github.com/xarblu/kwin-effects-better-blur-dx) by xarblu and contributors — the effect this builds on.
 - [WhiteSur-kde](https://github.com/vinceliuice/WhiteSur-kde) by vinceliuice — the theme files in `theme/` are modified copies of its artwork.
 - [liquid-glass](https://github.com/ryohsuke1231/liquid-glass) (GNOME extension) and [hyprglass](https://github.com/hyprnux/hyprglass) — the look and the lens technique.
+- The Global Theme preview images show the KDE Plasma wallpaper *Hanabi* by Krystian Zajdel (CC-BY-SA-4.0).
 
 GPL-3.0, see [LICENSE](LICENSE).
