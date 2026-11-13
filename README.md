@@ -102,6 +102,19 @@ and `bounds.py` need PySide6). Each takes an unpacked `.svg` and writes an `.svg
     gen_dock.py     R in.svg out.svgz [maskInset]     dock ("south-" prefix) pieces with corner radius R
     panel_shadow.py R in.svgz out.svgz                shadow corners that follow radius R
     dock_border.py  R edge lit back in.svgz out.svgz [shadeWidth shadeOpacity]   light line round the dock
+    kv_menu.py      R in.svg out.svg [border outline SH]   menu frame of a Kvantum theme (plain .svg in and out)
+
+### Application menus (Kvantum)
+
+Menus are drawn by Kvantum, not by the Plasma theme, and the installer does not touch your Kvantum theme.
+To give them the same glass with clean round corners, in a copy of the dark Kvantum theme under `~/.config/Kvantum/`:
+
+    python3 tools/kv_menu.py 8 Theme.svg Theme.svg.new 0 0 4      # then replace Theme.svg with the result
+
+and in its `.kvconfig`: `[Menu] frame.top/bottom/left/right=15`, `menu_blur_radius=10`, `reduce_menu_opacity=0`
+(the script bakes the translucency into the art; Kvantum's own fade also fades the shadow at the corners).
+`MenuCornerRadius=10` and `MenuEdgeLine=40` from `glass-settings.conf` do the rest. Restart apps, and the Plasma
+shell for global-menu popups, to see it. Shadow strength: `KV_SHADOW` (default 0.1). Only the dark theme is done.
 
 After replacing a theme file: `rm ~/.cache/ksvg-elements` and `systemctl --user restart plasma-plasmashell.service`.
 Switching the Plasma theme away and back is not enough.
