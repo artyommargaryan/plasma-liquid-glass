@@ -30,6 +30,7 @@ def elem_span(s, i):
         elif not t.group(2): depth += 1
         if depth == 0: return m.start(), m.start() + t.end()
 m = re.search(r'<path[^>]*id="menu-normal"[^>]*>', s, re.S); FILL = re.search(r'fill:(#[0-9a-fA-F]{6})', m.group(0)).group(1)
+FILL = os.environ.get('KV_FILL', FILL)   # body colour; default is the theme's own
 f = lambda v: ('%.4f' % v).rstrip('0').rstrip('.')
 names = ['topleft', 'topright', 'bottomright', 'bottomleft']
 def arc_pts(cx, cy, r, q): return [((cx-r, cy), (cx, cy-r)), ((cx, cy-r), (cx+r, cy)), ((cx+r, cy), (cx, cy+r)), ((cx, cy+r), (cx-r, cy))][q]
@@ -87,5 +88,6 @@ s = re.sub(r'<(radial|linear)Gradient id="glassMenuShadow.*?</\1Gradient>', '', 
 i = s.index('</defs>'); s = s[:i] + ''.join(defs) + s[i:]
 a, b = elem_span(s, 'menu-normal'); el = s[a:b]
 el = re.sub(r'fill-opacity:[0-9.]+', 'fill-opacity:%s' % FILLOP, el) if 'fill-opacity' in el else el.replace('fill:', 'fill-opacity:%s;fill:' % FILLOP, 1)
+el = re.sub(r'(?<![-\w])opacity:[0-9.]+', 'opacity:1', el); el = re.sub(r'fill:#[0-9a-fA-F]{6}', 'fill:' + FILL, el)
 s = s[:a] + el + s[b:]
 open(dst, 'w').write(s); print('ok R=%g SH=%g fill=%s' % (R, SH, FILL))

@@ -114,7 +114,12 @@ To give them the same glass with clean round corners, in a copy of the dark Kvan
 and in its `.kvconfig`: `[Menu] frame.top/bottom/left/right=15`, `menu_blur_radius=10`, `reduce_menu_opacity=0`
 (the script bakes the translucency into the art; Kvantum's own fade also fades the shadow at the corners).
 `MenuCornerRadius=10` and `MenuEdgeLine=40` from `glass-settings.conf` do the rest. Restart apps, and the Plasma
-shell for global-menu popups, to see it. Shadow strength: `KV_SHADOW` (default 0.1). Only the dark theme is done.
+shell for global-menu popups, to see it. Shadow strength: `KV_SHADOW` (default 0.1).
+
+The body colour and translucency are set with `KV_FILL` and `KV_FILLOP` (defaults: the theme's own colour at 0.2).
+For a light theme whose Plasma popups are dark glass with light text, give the menu the same tint as the popup
+frame (for example `KV_FILL='#f4f4f4' KV_FILLOP=0.16`) and set `text.normal.color` and
+`text.normal.inactive.color` to a light colour in `[Menu]` and `[MenuItem]`. Icons from a light icon theme stay dark.
 
 After replacing a theme file: `rm ~/.cache/ksvg-elements` and `systemctl --user restart plasma-plasmashell.service`.
 Switching the Plasma theme away and back is not enough.
