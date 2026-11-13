@@ -5,12 +5,14 @@
 #   ./install.sh --skip-effect   theme files, scripts and settings only (effect already installed)
 #   ./install.sh --skip-deps     do not try to install build dependencies
 #   ./install.sh --no-reload     do not touch the running session (no shell restart, no effect load)
+#   ./install.sh --layout        also REPLACE your panels with a top bar and a floating dock on every screen
+#                                (previous layout is saved; ./uninstall.sh --restore-layout brings it back)
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-SKIP_EFFECT=0; SKIP_DEPS=0; RELOAD=1
+SKIP_EFFECT=0; SKIP_DEPS=0; RELOAD=1; LAYOUT=0
 for a in "$@"; do case "$a" in
-  --skip-effect) SKIP_EFFECT=1 ;; --skip-deps) SKIP_DEPS=1 ;; --no-reload) RELOAD=0 ;;
-  -h|--help) sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  --skip-effect) SKIP_EFFECT=1 ;; --skip-deps) SKIP_DEPS=1 ;; --no-reload) RELOAD=0 ;; --layout) LAYOUT=1 ;;
+  -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
   *) echo "unknown option: $a" >&2; exit 2 ;;
 esac; done
 
@@ -74,6 +76,29 @@ for t in WhiteSur WhiteSur-dark; do
 done
 rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/ksvg-elements"
 
+# ---- 2b. application menus (Kvantum) -----------------------------------------------------------------------------
+# Menus are drawn by Kvantum, not by the Plasma theme: give the WhiteSur Kvantum theme a matching glass menu frame.
+say "Setting up Kvantum menus"
+KV="$CONF/Kvantum/WhiteSur"
+if [ ! -d "$KV" ] && [ -d /usr/share/Kvantum/WhiteSur ]; then
+  mkdir -p "$CONF/Kvantum"; cp -r /usr/share/Kvantum/WhiteSur "$KV"; echo "copied system Kvantum theme WhiteSur to $KV"
+fi
+if ! command -v python3 >/dev/null; then warn "python3 not found - Kvantum menus left as they are"
+elif [ ! -d "$KV" ]; then warn "Kvantum theme WhiteSur is not installed - menus left as they are (get it from https://github.com/vinceliuice/WhiteSur-kde)"
+else
+  for v in WhiteSur WhiteSurDark; do
+    svg="$KV/$v.svg"; cfg="$KV/$v.kvconfig"
+    { [ -f "$svg" ] && [ -f "$cfg" ]; } || { warn "$v.svg / $v.kvconfig missing in $KV - skipped"; continue; }
+    for f in "$svg" "$cfg"; do [ -e "$f.pre-liquid-glass" ] || cp "$f" "$f.pre-liquid-glass"; done
+    # body tint = the popup frame of the matching Plasma theme; the light theme's popups are dark glass with light text
+    if [ "$v" = WhiteSurDark ]; then fill='#1c1c1e'; op=0.18; textopt=""; else fill='#f4f4f4'; op=0.16; textopt="--light-text"; fi
+    if KV_FILL="$fill" KV_FILLOP="$op" python3 "$HERE/tools/kv_menu.py" 8 "$svg.pre-liquid-glass" "$svg.new" 0 0 4 >/dev/null \
+       && python3 "$HERE/tools/kv_config.py" "$cfg.pre-liquid-glass" "$cfg.new" $textopt; then
+      mv -f "$svg.new" "$svg"; mv -f "$cfg.new" "$cfg"; echo "menu frame installed in $v"
+    else rm -f "$svg.new" "$cfg.new"; warn "could not adapt $v (unexpected theme version?) - left as it was"; fi
+  done
+fi
+
 # ---- 3. scripts, autostart, light/dark sync ---------------------------------------------------------------------
 say "Installing scripts"
 mkdir -p "$BIN" "$CONF/autostart" "$CONF/systemd/user" "$DATA/applications"
@@ -129,16 +154,47 @@ if [ "$RELOAD" = 1 ]; then
     $E.loadEffect blur >/dev/null 2>&1 || true
     warn "KWin did not load the effect. Is kwin-devel the same version as kwin? Try logging out and back in, then: journalctl -b | grep -i better_blur"
   fi
-  # always restart the shell: it has to reconnect to the newly loaded effect, and pick up the new theme files
-  systemctl --user restart plasma-plasmashell.service 2>/dev/null || warn "restart the Plasma shell (or log out and in) to see the result"
+  if [ "$LAYOUT" = 1 ]; then
+    say "Replacing the panel layout"
+    LB="$DATA/plasma-liquid-glass/layout-backup"
+    if [ ! -d "$LB" ]; then
+      mkdir -p "$LB"; cp "$CONF/plasma-org.kde.plasma.desktop-appletsrc" "$CONF/plasmashellrc" "$LB/" 2>/dev/null || true
+      echo "previous layout saved in $LB"
+    fi
+    if ids="$(qdbus-qt6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$(cat "$HERE/layout/glass-layout.js")" 2>/dev/null)" \
+       && printf '%s\n' "$ids" | grep -q '^bar [0-9]'; then
+      # "applets only" floating and the translucent setting live in plasmashellrc and can only be written while
+      # the shell is stopped (it rewrites the file on exit)
+      systemctl --user stop plasma-plasmashell.service 2>/dev/null || kquitapp6 plasmashell 2>/dev/null || true; sleep 2
+      printf '%s\n' "$ids" | while read -r kind id; do
+        case "$kind" in
+          bar)  kwriteconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key floating 0
+                kwriteconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key floatingApplets 1
+                kwriteconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key panelOpacity 2 ;;
+          dock) kwriteconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key floating 1
+                kwriteconfig6 --file plasmashellrc --group PlasmaViews --group "Panel $id" --key panelOpacity 2 ;;
+        esac
+      done
+      echo "panels created: $(printf '%s' "$ids" | tr '\n' ' ')"
+    else warn "the Plasma shell did not accept the layout script - panels left as they are"; fi
+  fi
+  # always (re)start the shell: it has to reconnect to the newly loaded effect, and pick up the new theme files
+  systemctl --user restart plasma-plasmashell.service 2>/dev/null || { command -v kstart >/dev/null && kstart plasmashell >/dev/null 2>&1; } \
+    || warn "restart the Plasma shell (or log out and in) to see the result"
 else
+  [ "$LAYOUT" = 1 ] && warn "--layout needs the running session; skipped because of --no-reload"
   echo "Session not reloaded (--no-reload). Log out and back in, then run: systemctl --user enable --now macos-theme-sync.path"
 fi
 
-cat <<EOF
-
-Done. Two things to set by hand (see README, "Panel setup"):
+echo
+if [ "$LAYOUT" = 1 ] && [ "$RELOAD" = 1 ]; then
+  echo "Done. Panels were replaced with a top bar and a dock per screen (undo: ./uninstall.sh --restore-layout)."
+else
+  cat <<EOF
+Done. Your panels were not touched. For the intended look either re-run with --layout (replaces your panels,
+keeps a backup) or set by hand (README, "Panel setup"):
   - dock: a bottom panel set to Floating, with "Fit content" width
   - top bar: Floating -> "Applets only", so popups get four round corners
-After every KWin update run:  glass-blur-rebuild
 EOF
+fi
+echo "After every KWin update run:  glass-blur-rebuild"

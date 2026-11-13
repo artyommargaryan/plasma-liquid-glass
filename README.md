@@ -18,7 +18,8 @@ It is made of three parts:
 ## Status
 
 Built and tested on **one machine**: Fedora 44, Plasma/KWin 6.8.2, Wayland, two 1080p screens. The installer's file
-and settings steps are also tested against an empty home directory; the full install on a second machine is not.
+and settings steps are also tested against an empty home directory, and the `--layout` panel script in a separate
+nested Plasma session; the full install on a second machine is not.
 Other distributions should work but need their build dependencies installed by hand. X11 is untested.
 
 ## Requirements
@@ -37,8 +38,8 @@ Other distributions should work but need their build dependencies installed by h
 The installer asks for `sudo` twice at most: for build dependencies (Fedora only) and to install the compiled effect
 into `/usr`. Everything else goes into your home directory. It then restarts the Plasma shell so the new artwork shows.
 
-Options: `--skip-deps` (dependencies already installed, or not on Fedora), `--skip-effect` (theme files, scripts and
-settings only), `--no-reload` (do not touch the running session).
+Options: `--layout` (also replace your panels, see below), `--skip-deps` (dependencies already installed, or not on
+Fedora), `--skip-effect` (theme files, scripts and settings only), `--no-reload` (do not touch the running session).
 
 On a non-Fedora system, install the dependencies from the
 [effect's README](https://github.com/artyommargaryan/kwin-effects-better-blur-dx/tree/glass#building) first, then run
@@ -51,6 +52,7 @@ What it changes:
 | Compiled effect, id `better_blur_dx_local` | `/usr` (KWin plugin dirs) | — |
 | Effect source | `~/.local/share/plasma-liquid-glass/kwin-effect` | — |
 | Popup and dock artwork | `~/.local/share/plasma/desktoptheme/WhiteSur{,-dark}/` | `*.pre-liquid-glass` next to each file |
+| Menu frame and menu settings of the WhiteSur Kvantum theme (light and dark) | `~/.config/Kvantum/WhiteSur/` | `*.pre-liquid-glass` next to each file |
 | Glass settings, stock blur off | `~/.config/kwinrc` | `~/.config/kwinrc.pre-liquid-glass` |
 | `macos-theme-toggle`, `glass-blur-guard`, `glass-blur-rebuild` | `~/.local/bin/` | — |
 | Login check | `~/.config/autostart/glass-blur-guard.desktop` | — |
@@ -58,11 +60,16 @@ What it changes:
 
 ### Panel setup
 
-The installer does not touch your panel layout. For the intended look, in each panel's edit mode:
+By default the installer does not touch your panel layout. Two ways to get the intended look:
 
-- **Dock:** a bottom panel, *Floating*, width *Fit content*, opacity *Translucent*.
-- **Top bar:** Floating → **Applets only**. The bar stays attached to the screen edge while its popups float, which
-  gives them four round corners.
+- **Automatic:** `./install.sh --layout` (add `--skip-effect` if the effect is already installed). It **removes all
+  existing panels** and creates a top bar (launcher, global menu, system tray, clock) and a floating dock on every
+  screen. The previous layout is saved in `~/.local/share/plasma-liquid-glass/layout-backup`;
+  `./uninstall.sh --restore-layout` puts it back.
+- **By hand**, in each panel's edit mode:
+  - **Dock:** a bottom panel, *Floating*, width *Fit content*, opacity *Translucent*.
+  - **Top bar:** Floating → **Applets only**. The bar stays attached to the screen edge while its popups float, which
+    gives them four round corners.
 
 ## After a KWin update
 
@@ -106,13 +113,14 @@ and `bounds.py` need PySide6). Each takes an unpacked `.svg` and writes an `.svg
 
 ### Application menus (Kvantum)
 
-Menus are drawn by Kvantum, not by the Plasma theme, and the installer does not touch your Kvantum theme.
-To give them the same glass with clean round corners, in a copy of the dark Kvantum theme under `~/.config/Kvantum/`:
+Menus are drawn by Kvantum, not by the Plasma theme. The installer adapts the WhiteSur Kvantum theme (light and
+dark) so menus get the same glass, a clean 10px corner and an even edge line. What it does, in case you want to do
+the same to another Kvantum theme:
 
     python3 tools/kv_menu.py 8 Theme.svg Theme.svg.new 0 0 4      # then replace Theme.svg with the result
+    python3 tools/kv_config.py Theme.kvconfig Theme.kvconfig.new  # frame.*=15, menu_blur_radius=10, reduce_menu_opacity=0
 
-and in its `.kvconfig`: `[Menu] frame.top/bottom/left/right=15`, `menu_blur_radius=10`, `reduce_menu_opacity=0`
-(the script bakes the translucency into the art; Kvantum's own fade also fades the shadow at the corners).
+(the first script bakes the translucency into the art; Kvantum's own fade also fades the shadow at the corners).
 `MenuCornerRadius=10` and `MenuEdgeLine=40` from `glass-settings.conf` do the rest. Restart apps, and the Plasma
 shell for global-menu popups, to see it. Shadow strength: `KV_SHADOW` (default 0.1).
 
