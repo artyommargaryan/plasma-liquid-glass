@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Rebuild and reinstall the glass blur effect after a KWin update. Run in a terminal (asks for sudo).
+set -euo pipefail
+# Source tree: $GLASS_BLUR_SRC, else where install.sh cloned it, else ~/projects/kwin-effects-better-blur-dx.
+SRC="${GLASS_BLUR_SRC:-}"
+for d in "${XDG_DATA_HOME:-$HOME/.local/share}/plasma-liquid-glass/kwin-effect" "$HOME/projects/kwin-effects-better-blur-dx"; do
+  [ -z "$SRC" ] && [ -f "$d/CMakeLists.txt" ] && SRC="$d"
+done
+[ -n "$SRC" ] || { echo "glass-blur-rebuild: effect source not found; set GLASS_BLUR_SRC" >&2; exit 1; }
+ID=better_blur_dx_local
+E="qdbus-qt6 org.kde.KWin /Effects org.kde.kwin.Effects"
+cd "$SRC"
+echo "== configuring and building in $SRC/build"
+cmake -B build -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release >/dev/null
+cmake --build build -j"$(nproc)"
+echo "== installing (sudo)"
+sudo cmake --install build
+if [ "$($E.isEffectLoaded "$ID")" = "true" ]; then
+  echo "== an older copy is still loaded in this session: log out and back in to use the new build"
+elif [ "$($E.loadEffect "$ID")" = "true" ]; then
+  $E.unloadEffect blur >/dev/null
+  echo "== glass blur loaded, stock blur switched off. Done, no relogin needed."
+else
+  echo "== installed, but KWin did not load it. Check: journalctl -b | grep -i better_blur ; is kwin-devel the same version as kwin? (rpm -q kwin kwin-devel)"
+  exit 1
+fi

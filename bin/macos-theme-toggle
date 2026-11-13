@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# macos-theme-toggle — one-shot light/dark flip of the whole WhiteSur stack.
+# Target: KDE Plasma 6 / Wayland with the WhiteSur themes. No logout, no app restarts.
+# Usage: macos-theme-toggle [light|dark|toggle|sync]   (no argument = toggle)
+#   sync = something else (Plasma's own Dark Mode switch) already changed the colour scheme;
+#          bring Kvantum, GTK, libadwaita and the glass values in line with it. Run automatically
+#          by the systemd user unit macos-theme-sync.path whenever kdeglobals changes.
+set -uo pipefail
+
+MODE="${1:-toggle}"
+case "$MODE" in light|dark|toggle|sync) ;; *) echo "usage: macos-theme-toggle [light|dark|toggle|sync]" >&2; exit 2 ;; esac
+
+# One run at a time: a toggle changes kdeglobals, which starts a sync run; that run must wait and then find nothing to do.
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/macos-theme-mode"
+mkdir -p "$(dirname "$STATE")"
+exec 9>"$STATE.lock"; flock 9
+
+warn() { printf 'macos-theme-toggle: %s\n' "$*" >&2; }
+
+# Source of truth: kdeglobals ColorScheme, read cascade-aware.
+current="$(kreadconfig6 --file kdeglobals --group General --key ColorScheme 2>/dev/null)"
+if [ "$MODE" = "toggle" ]; then
+  case "$current" in *[Dd]ark*) MODE=light ;; *) MODE=dark ;; esac
+fi
+
+case "$current" in *[Dd]ark*) NOW=dark ;; *) NOW=light ;; esac
+# FROM = the mode everything was last brought in line with (falls back to the colour scheme).
+FROM="$(cat "$STATE" 2>/dev/null)"; case "$FROM" in light|dark) ;; *) FROM="$NOW" ;; esac
+SYNC=0
+if [ "$MODE" = "sync" ]; then
+  SYNC=1; MODE="$NOW"
+  [ "$FROM" = "$MODE" ] && exit 0
+fi
+echo "$MODE" > "$STATE"
+
+if [ "$MODE" = "dark" ]; then
+  scheme=WhiteSurDark;  desktop=WhiteSur-dark; icons=WhiteSur-dark; kv=WhiteSurDark; gtk=WhiteSur-Dark; adw=prefer-dark
+else
+  scheme=WhiteSur;      desktop=WhiteSur;      icons=WhiteSur;      kv=WhiteSur;     gtk=WhiteSur-Light; adw=default
+fi
+
+# 1. Colour scheme — also drives the freedesktop portal + kded gtkconfig re-derivation.
+if [ "$SYNC" = 1 ]; then :
+elif plasma-apply-colorscheme --list-schemes 2>/dev/null | grep -q "^ \* $scheme"; then
+  plasma-apply-colorscheme "$scheme" >/dev/null
+else warn "colour scheme $scheme not installed - skipped"; fi
+
+# 2. Plasma desktop theme.
+if [ "$SYNC" = 1 ]; then :
+elif plasma-apply-desktoptheme --list-themes 2>/dev/null | grep -q "^ \* $desktop"; then
+  plasma-apply-desktoptheme "$desktop" >/dev/null
+else warn "desktop theme $desktop not installed - skipped"; fi
+
+# 3. Icons — plasma-changeicons does no validation, so guard existence here.
+if [ "$SYNC" = 1 ]; then :
+elif [ -f "$HOME/.local/share/icons/$icons/index.theme" ] || [ -f "/usr/share/icons/$icons/index.theme" ]; then
+  /usr/libexec/plasma-changeicons "$icons" >/dev/null 2>&1
+else warn "icon theme $icons not installed - skipped"; fi
+
+# 4. Kvantum + widget style re-pin.
+if command -v kvantummanager >/dev/null && [ -d "$HOME/.config/Kvantum/WhiteSur" ]; then
+  kvantummanager --set "$kv" >/dev/null 2>&1
+  if [ "$(kreadconfig6 --file kdeglobals --group KDE --key widgetStyle 2>/dev/null)" != "kvantum" ]; then
+    kwriteconfig6 --notify --file kdeglobals --group KDE --key widgetStyle kvantum
+  fi
+  dbus-send --session --type=signal /KGlobalSettings org.kde.KGlobalSettings.notifyChange int32:2 int32:0
+else warn "kvantum or WhiteSur kvantum theme missing - skipped"; fi
+
+# 5. GTK theme via the kde-gtk-config DBus service (it owns settings.ini — never edit by hand).
+if [ -d "$HOME/.themes/$gtk" ] || [ -d "/usr/share/themes/$gtk" ]; then
+  gdbus call --session --dest org.kde.GtkConfig --object-path /GtkConfig \
+    --method org.kde.GtkConfig.setGtkTheme "$gtk" >/dev/null || warn "GtkConfig DBus call failed"
+else warn "GTK theme $gtk not installed - skipped"; fi
+
+# 6. libadwaita insurance (kded + portal usually already did this from kdeglobals).
+command -v gsettings >/dev/null && gsettings set org.gnome.desktop.interface color-scheme "$adw"
+
+# 7. Glass blur effect (local Better Blur DX fork): each mode keeps its own values.
+#    The values in use are remembered for the mode being left (so slider tuning sticks),
+#    then the other mode's values are applied. Store: ~/.config/glassblurmodesrc
+GLASS_ID=better_blur_dx_local
+GLASS_KEYS="BlurStrength DockBlurStrength Brightness Contrast Saturation RimStrength RimBackStrength InnerShade GlassLumaCeiling"
+glass_default() { # mode key
+  case "$1:$2" in
+    *:BlurStrength) echo 5 ;; *:DockBlurStrength) echo 3 ;; *:Brightness) echo 95 ;; *:Contrast) echo 90 ;;
+    *:Saturation) echo 160 ;; *:RimStrength) echo 150 ;; *:RimBackStrength) echo 45 ;; *:InnerShade) echo 0 ;;
+    dark:GlassLumaCeiling) echo 45 ;; light:GlassLumaCeiling) echo 35 ;;
+  esac
+}
+if [ "$(kreadconfig6 --file kwinrc --group Plugins --key "${GLASS_ID}Enabled" 2>/dev/null)" = "true" ]; then
+  if [ "$FROM" != "$MODE" ]; then
+    for k in $GLASS_KEYS; do
+      v="$(kreadconfig6 --file kwinrc --group Effect-better-blur-dx --key "$k" 2>/dev/null)"
+      [ -n "$v" ] && kwriteconfig6 --file glassblurmodesrc --group "$FROM" --key "$k" "$v"
+    done
+  fi
+  for k in $GLASS_KEYS; do
+    v="$(kreadconfig6 --file glassblurmodesrc --group "$MODE" --key "$k" --default "$(glass_default "$MODE" "$k")" 2>/dev/null)"
+    kwriteconfig6 --file kwinrc --group Effect-better-blur-dx --key "$k" "$v"
+  done
+  qdbus-qt6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1
+  qdbus-qt6 org.kde.KWin /Effects org.kde.kwin.Effects.reconfigureEffect "$GLASS_ID" >/dev/null 2>&1 \
+    || warn "could not reconfigure the glass effect"
+fi
+
+# NOTE: window decoration untouched on purpose — Klassy follows the colour scheme.
+# NOTE: wallpaper untouched on purpose — WhiteSur package auto-follows via DynamicMode=0.
+
+echo "switched to $MODE ($scheme)"

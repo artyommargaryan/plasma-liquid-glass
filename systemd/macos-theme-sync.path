@@ -1,0 +1,8 @@
+[Unit]
+Description=Watch the colour scheme so Plasma's Dark Mode switch also updates Kvantum, GTK and the glass values
+
+[Path]
+PathChanged=%h/.config/kdeglobals
+
+[Install]
+WantedBy=graphical-session.target

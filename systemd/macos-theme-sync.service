@@ -1,0 +1,6 @@
+[Unit]
+Description=Bring Kvantum, GTK and the glass values in line with the current colour scheme
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/macos-theme-toggle sync

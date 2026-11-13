@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Login check for the locally built glass blur effect (Better Blur DX fork).
+# The plugin only loads into the exact KWin version it was built against, so after
+# a KWin update it silently stops loading. If that happened: switch on the stock
+# blur for this session (config untouched) and show how to rebuild.
+set -u
+ID="${GLASS_BLUR_ID:-better_blur_dx_local}"
+E="qdbus-qt6 org.kde.KWin /Effects org.kde.kwin.Effects"
+sleep "${GLASS_BLUR_WAIT:-15}"
+
+[ "$(kreadconfig6 --file kwinrc --group Plugins --key "${ID}Enabled")" = "true" ] || { echo "guard: $ID not enabled in kwinrc, nothing to do"; exit 0; }
+if [ "$($E.isEffectLoaded "$ID" 2>/dev/null)" = "true" ]; then echo "guard: $ID loaded, ok"; exit 0; fi
+
+kwin_ver="$(kwin_wayland --version 2>/dev/null | awk '{print $NF}')"
+echo "guard: $ID enabled but NOT loaded (KWin $kwin_ver) - falling back to stock blur for this session"
+$E.loadEffect blur >/dev/null 2>&1
+echo "guard: stock blur loaded: $($E.isEffectLoaded blur 2>/dev/null)"
+timeout 5 notify-send -a "Glass blur" -i dialog-warning -u critical \
+  "Glass blur is not loaded" \
+  "The glass effect was built for an older KWin (now $kwin_ver). Plain blur is on for now. To get glass back, run in a terminal: glass-blur-rebuild" \
+  || echo "guard: could not show a notification"
+exit 1
