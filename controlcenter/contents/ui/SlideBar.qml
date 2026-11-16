@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// A thick pill slider: click or drag anywhere on it, or turn the wheel over it.
+// A thin line slider with an icon in front: click or drag anywhere along it, or turn the wheel over it.
 import QtQuick
 import org.kde.kirigami as Kirigami
 
@@ -10,44 +10,50 @@ Item {
     property real value: 0
     property string iconName
     readonly property real ratio: to > from ? Math.max(0, Math.min(1, (value - from) / (to - from))) : 0
+    readonly property color ink: Kirigami.Theme.textColor
     signal moved(real value)
 
     implicitHeight: Kirigami.Units.gridUnit * 1.5
     opacity: enabled ? 1 : 0.45
     Accessible.role: Accessible.Slider
 
-    Rectangle {
+    Kirigami.Icon {
+        id: icon
+        anchors.verticalCenter: parent.verticalCenter
+        width: Kirigami.Units.iconSizes.small
+        height: width
+        source: bar.iconName
+        isMask: true
+        color: bar.ink
+    }
+
+    Item {
         id: track
-        anchors.fill: parent
-        radius: height / 2
-        color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, 0.14)
-        clip: true
+        anchors {
+            left: icon.right
+            right: parent.right
+            leftMargin: Kirigami.Units.smallSpacing * 2
+            verticalCenter: parent.verticalCenter
+        }
+        height: 5
 
         Rectangle {
-            height: parent.height
-            // never narrower than the round end, so a low value still reads as a filled cap
-            width: Math.max(parent.height, parent.width * bar.ratio)
+            anchors.fill: parent
             radius: height / 2
-            color: Kirigami.Theme.textColor
-            opacity: 0.85
+            color: Qt.rgba(bar.ink.r, bar.ink.g, bar.ink.b, 0.25)
         }
-        Kirigami.Icon {
-            anchors.verticalCenter: parent.verticalCenter
-            x: (parent.height - width) / 2
-            width: Kirigami.Units.iconSizes.small
-            height: width
-            source: bar.iconName
-            isMask: true
-            // dark on a light fill and light on a dark one; a theme's background colour is not always the opposite
-            // of its text colour (light themes with dark glass popups draw light text)
-            color: Kirigami.Theme.textColor.hslLightness > 0.5 ? "#1e1e1e" : "#f2f2f2"
+        Rectangle {
+            height: parent.height
+            width: Math.max(height, parent.width * bar.ratio)
+            radius: height / 2
+            color: Qt.rgba(bar.ink.r, bar.ink.g, bar.ink.b, 0.92)
         }
     }
 
     MouseArea {
         anchors.fill: parent
         function set(x: real) {
-            const r = Math.max(0, Math.min(1, (x - height / 2) / Math.max(1, width - height)));
+            const r = Math.max(0, Math.min(1, (x - track.x) / Math.max(1, track.width)));
             bar.moved(bar.from + r * (bar.to - bar.from));
         }
         onPressed: mouse => set(mouse.x)

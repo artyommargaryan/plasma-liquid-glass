@@ -20,6 +20,8 @@ Tile {
     signal knobClicked()
 
     hovered: area.containsMouse
+    // one-row tiles are pills, the square ones circles
+    radius: height / 2
     opacity: enabled ? 1 : 0.45
     Accessible.role: Accessible.Button
     Accessible.name: title

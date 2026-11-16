@@ -15,6 +15,15 @@ Item {
 
     Keys.onEscapePressed: page.back()
 
+    // in the floating mode a page has no panel behind it, so it brings its own surface
+    Tile {
+        visible: glass
+        z: -1
+        anchors.fill: parent
+        anchors.margins: -Kirigami.Units.largeSpacing
+        radius: Kirigami.Units.gridUnit * 1.5
+    }
+
     RowLayout {
         id: header
         anchors { left: parent.left; right: parent.right; top: parent.top }

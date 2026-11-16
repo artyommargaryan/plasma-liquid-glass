@@ -83,6 +83,16 @@ if [ "$SKIP_EFFECT" = 0 ]; then
     *) warn "dock widget skipped: it is built for Plasma 6.8 ($(plasmashell --version 2>/dev/null)) - the stock task manager is used" ;;
   esac
 fi
+if [ "$SKIP_EFFECT" = 0 ]; then
+  # ---- 1d. glass-shape: lets the Control Center show its tiles as separate pieces of glass ------------------------
+  say "Building the glass-shape module"
+  GS="$DATA/plasma-liquid-glass/glass-shape-build"
+  if cmake -S "$HERE/glass-shape" -B "$GS" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -Wno-dev >/dev/null \
+     && cmake --build "$GS" -j"$(nproc)"; then
+    say "Installing the glass-shape module (sudo)"
+    sudo cmake --install "$GS" || warn "glass-shape not installed - the Control Center uses its ordinary popup"
+  else warn "could not build glass-shape - the Control Center uses its ordinary popup"; fi
+fi
 MENU_STYLE=0; [ -n "$QT_PLUGINS" ] && [ -f "$QT_PLUGINS/styles/libliquidglassstyle.so" ] && MENU_STYLE=1
 
 # ---- 2. theme files --------------------------------------------------------------------------------------------

@@ -105,6 +105,8 @@ PlasmoidItem {
         columns: Plasmoid.configuration.columns
         rows: Plasmoid.configuration.rows
         previewQuery: Plasmoid.configuration.previewQuery
+        backdrop: Plasmoid.configuration.backdrop
+        backdropRadius: Plasmoid.configuration.backdropRadius
     }
 
     Plasmoid.contextualActions: [

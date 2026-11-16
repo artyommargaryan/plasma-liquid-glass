@@ -8,6 +8,10 @@
       <label>Icon of the panel button: an icon name, or empty for the widget's own two-switches icon.</label>
       <default></default>
     </entry>
+    <entry name="floatingTiles" type="Bool">
+      <label>Show the controls as separate glass tiles floating over the desktop (needs the org.liquidglass.shape module); off = in the ordinary popup.</label>
+      <default>true</default>
+    </entry>
     <entry name="previewPage" type="String">
       <label>For screenshots and tests: the page to show when previewOpen opens the panel ("bluetooth", "notifications" or empty).</label>
       <default></default>

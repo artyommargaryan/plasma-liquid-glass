@@ -23,6 +23,9 @@ PlasmaCore.Dialog {
     property int columns: 7
     property int rows: 3
     property string previewQuery: ""
+    // the gradient tint under the content, and the corner radius it is drawn with (the theme's popup radius)
+    property bool backdrop: true
+    property int backdropRadius: 20
 
     readonly property int cellWidth: Kirigami.Units.gridUnit * 7
     readonly property int cellHeight: Kirigami.Units.iconSizes.huge + Kirigami.Units.gridUnit * 2 + Kirigami.Units.smallSpacing
@@ -190,6 +193,8 @@ PlasmaCore.Dialog {
             width: Kirigami.Units.gridUnit * 30
             height: Kirigami.Units.gridUnit * 3
 
+            Backdrop { frame: searchWindow.margins }
+
             Kirigami.Icon {
                 id: searchIcon
                 anchors.verticalCenter: parent.verticalCenter
@@ -284,6 +289,8 @@ PlasmaCore.Dialog {
         width: panel.columns * panel.cellWidth + Kirigami.Units.gridUnit * 2
         height: browse.implicitHeight + Kirigami.Units.gridUnit * 2
         focus: true
+
+        Backdrop { frame: panel.margins }
 
         // A click in this window takes the keyboard away from the search window: keep typing working from here
         // and hand the keyboard back.
@@ -690,6 +697,32 @@ PlasmaCore.Dialog {
                     }
                 }
             }
+        }
+    }
+
+    // The surface under the content: over the theme's glass, a tint that is solid along the top edge and clears
+    // towards the bottom, so the upper rows sit on a calm ground and the wallpaper shows through the lower ones.
+    // Measured on the Launchpad of macos-golden-gate-liquid-kde: full strength at the top, 0.69 at 56% of the
+    // height, nothing at the bottom; black under light text, a light grey (#cecece) under dark text.
+    component Backdrop: Rectangle {
+        // the window's frame margins: the tint covers the frame too, not just the content area inside it
+        required property var frame
+        readonly property bool lightText: Kirigami.Theme.textColor.hslLightness > 0.5
+        readonly property color tint: lightText ? "#000000" : "#cecece"
+        visible: panel.backdrop
+        z: -1
+        anchors.fill: parent
+        anchors.leftMargin: -frame.left
+        anchors.rightMargin: -frame.right
+        anchors.topMargin: -frame.top
+        anchors.bottomMargin: -frame.bottom
+        radius: panel.backdropRadius
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, lightText ? 0.10 : 0.35)
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Qt.rgba(tint.r, tint.g, tint.b, 1.0) }
+            GradientStop { position: 0.56; color: Qt.rgba(tint.r, tint.g, tint.b, 0.69) }
+            GradientStop { position: 1.0; color: Qt.rgba(tint.r, tint.g, tint.b, 0.0) }
         }
     }
 

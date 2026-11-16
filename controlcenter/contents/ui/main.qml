@@ -36,9 +36,9 @@ PlasmoidItem {
         activeFocusOnTab: true
         Accessible.role: Accessible.Button
         Accessible.name: i18n("Control Center")
-        onClicked: root.expanded = !root.expanded
-        Keys.onReturnPressed: root.expanded = !root.expanded
-        Keys.onSpacePressed: root.expanded = !root.expanded
+        onClicked: root.toggle()
+        Keys.onReturnPressed: root.toggle()
+        Keys.onSpacePressed: root.toggle()
 
         readonly property bool own: Plasmoid.configuration.icon.length === 0
         Kirigami.Icon {
@@ -49,7 +49,7 @@ PlasmoidItem {
             isMask: button.own
             color: Kirigami.Theme.textColor
             active: button.containsMouse
-            opacity: button.containsMouse || root.expanded ? 1 : 0.9
+            opacity: button.containsMouse || root.shown ? 1 : 0.9
         }
     }
     toolTipSubText: i18n("Network, sound, display and more")
@@ -60,7 +60,68 @@ PlasmoidItem {
 
     function openSettings(module: string) {
         KCMUtils.KCMLauncher.openSystemSettings(module);
+        root.hide();
+    }
+
+    // Two ways of showing the controls. With the compiled module org.liquidglass.shape (glass-shape/) they float:
+    // a window without a background in which every tile is a piece of glass of its own. Without it they sit in
+    // the widget's ordinary popup, on the theme's glass panel.
+    readonly property bool floating: {
+        try {
+            Qt.createQmlObject("import org.liquidglass.shape; GlassShape {}", root, "probe").destroy();
+            return Plasmoid.configuration.floatingTiles;
+        } catch (e) {
+            return false;
+        }
+    }
+    readonly property bool shown: floating ? floatDialog.visible : root.expanded
+    function show() {
+        if (floating) {
+            floatDialog.visible = true;
+            floatDialog.requestActivate();
+        } else {
+            root.expanded = true;
+        }
+    }
+    function hide() {
+        floatDialog.visible = false;
         root.expanded = false;
+    }
+    function toggle() {
+        shown ? hide() : show();
+    }
+    Plasmoid.onActivated: if (floating) {
+        toggle();
+    }
+    // anything that still opens the ordinary popup (a shortcut, the panel) is turned into the floating window
+    onExpandedChanged: if (floating && root.expanded) {
+        root.expanded = false;
+        show();
+    }
+
+    PlasmaCore.Dialog {
+        id: floatDialog
+        // read by the tiles (Tile.qml) to know they have to bring their own glass
+        property bool glassTiles: true
+        visualParent: root
+        location: Plasmoid.location
+        backgroundHints: PlasmaCore.Dialog.NoBackground
+        hideOnWindowDeactivate: !Plasmoid.configuration.previewOpen
+        flags: Qt.WindowStaysOnTopHint
+        mainItem: Item {
+            // a little air between the tiles and the panel and screen edges
+            readonly property int pad: Kirigami.Units.largeSpacing
+            width: (floatLoader.item ? floatLoader.item.Layout.preferredWidth : 1) + pad * 2
+            height: (floatLoader.item ? floatLoader.item.Layout.preferredHeight : 1) + pad * 2
+            Keys.onEscapePressed: root.page.length > 0 ? root.page = "" : root.hide()
+            Loader {
+                id: floatLoader
+                anchors.fill: parent
+                anchors.margins: parent.pad
+                active: root.floating
+                sourceComponent: contentComponent
+            }
+        }
     }
 
     PlasmaNM.AvailableDevices { id: netDevices }
@@ -86,7 +147,7 @@ PlasmoidItem {
     // "" = the tiles, otherwise the name of the detail page on show
     property string page: ""
     // always back on the tiles the next time it opens
-    onExpandedChanged: if (!root.expanded) {
+    onShownChanged: if (!root.shown) {
         root.page = Plasmoid.configuration.previewOpen ? Plasmoid.configuration.previewPage : "";
     }
     Component.onCompleted: if (Plasmoid.configuration.previewOpen) {
@@ -97,7 +158,7 @@ PlasmoidItem {
     property date now: new Date()
     Timer {
         interval: 30000
-        running: root.expanded
+        running: root.shown
         repeat: true
         triggeredOnStart: true
         onTriggered: root.now = new Date()
@@ -108,10 +169,13 @@ PlasmoidItem {
         interval: 1000
         repeat: true
         running: Plasmoid.configuration.previewOpen
-        onTriggered: root.expanded = true
+        onTriggered: root.show()
     }
 
-    fullRepresentation: Item {
+    fullRepresentation: contentComponent
+    Component {
+        id: contentComponent
+        Item {
         id: full
         readonly property var sink: Volume.PreferredDevice.sink
         readonly property var player: Plasmoid.configuration.previewHideMedia ? null : players.currentPlayer
@@ -448,6 +512,7 @@ PlasmoidItem {
                 }
             }
         }
+    }
     }
 
     component MediaButton: Item {

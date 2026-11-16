@@ -68,6 +68,7 @@ What it changes:
 | Launchpad widget "Launchpad (Liquid Glass)" (used by `--layout`) | `~/.local/share/plasma/plasmoids/org.liquidglass.launchpad` | — |
 | System Menu widget "System Menu (Liquid Glass)" (used by `--layout`) | `~/.local/share/plasma/plasmoids/org.liquidglass.systemmenu` | — |
 | Control Center widget "Control Center (Liquid Glass)" (used by `--layout`) | `~/.local/share/plasma/plasmoids/org.liquidglass.controlcenter` | — |
+| QML module `org.liquidglass.shape` (blur behind several rounded shapes of one window) | Qt QML dir (`…/qt6/qml/org/liquidglass/shape`) | — |
 | Effect source | `~/.local/share/plasma-liquid-glass/kwin-effect` | — |
 | Popup and dock artwork | `~/.local/share/plasma/desktoptheme/WhiteSur{,-dark}/` | `*.pre-liquid-glass` next to each file |
 | Menu frame and menu settings of the WhiteSur Kvantum theme (light and dark) | `~/.config/Kvantum/WhiteSur/` | `*.pre-liquid-glass` next to each file |
@@ -203,7 +204,12 @@ Bluetooth, notification, brightness, media and volume widgets use.
 - **Display**: a brightness bar for every screen that can be dimmed. **Sound**: volume and mute of the output in use, and a
   microphone mute.
 
-Bars take a click, a drag or the mouse wheel. Add it by hand with "Add or Manage Widgets", or let `--layout` put
+With the small compiled module in [`glass-shape/`](glass-shape) installed (the installer builds it), the controls
+float: there is no panel, every tile is a piece of glass of its own over the desktop. Without the module, or with
+`floatingTiles` off in the widget's config, they sit in the ordinary popup. The tile design follows the Control
+Center of macos-golden-gate-liquid-kde.
+
+Sliders take a click, a drag or the mouse wheel. Add it by hand with "Add or Manage Widgets", or let `--layout` put
 it next to the system tray.
 
 ## Dolphin
@@ -224,7 +230,7 @@ as every other menu. The logo is the `icon` setting (`start-here-kde-symbolic` b
 
 ## Known limits
 
-- The top bar is one glass strip, not separate pills, and buttons inside popups are not individually glass.
+- The top bar is one strip of clear glass, not separate pills, and buttons inside popups are not individually glass.
 - Apps that set their own colours (browsers, terminals) do not follow the light/dark switch.
 - The light theme draws white text, so the glass dims bright backdrops to keep it readable.
 

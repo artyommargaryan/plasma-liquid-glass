@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# QML module org.liquidglass.shape: GlassShape, an item that asks the compositor to blur behind its own outline.
+cmake_minimum_required(VERSION 3.20)
+project(liquidglass-shape LANGUAGES CXX)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+find_package(ECM 6.0.0 REQUIRED NO_MODULE)
+set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+include(KDEInstallDirs6)
+include(KDECMakeSettings)
+include(ECMQmlModule)
+find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(KF6WindowSystem REQUIRED)
+ecm_add_qml_module(liquidglassshape URI org.liquidglass.shape GENERATE_PLUGIN_SOURCE)
+target_sources(liquidglassshape PRIVATE glassshape.cpp glassshape.h)
+target_link_libraries(liquidglassshape PRIVATE Qt6::Quick KF6::WindowSystem)
+ecm_finalize_qml_module(liquidglassshape)

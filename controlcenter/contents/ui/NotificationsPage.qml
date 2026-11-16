@@ -43,7 +43,7 @@ DetailPage {
                 required property int index
                 required property var model
                 width: list.width
-                height: text.implicitHeight + Kirigami.Units.largeSpacing * 2
+                height: Math.max(info.implicitHeight, appIcon.height) + Kirigami.Units.largeSpacing * 2
                 hovered: rowArea.containsMouse
 
                 MouseArea {
@@ -61,7 +61,7 @@ DetailPage {
                     source: row.model.applicationIconName || row.model.iconName || "preferences-desktop-notification"
                 }
                 Column {
-                    id: text
+                    id: info
                     anchors {
                         left: appIcon.right
                         right: closeKnob.left

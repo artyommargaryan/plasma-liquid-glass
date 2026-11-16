@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 menu-style/build/
 dock/build/
+glass-shape/build/

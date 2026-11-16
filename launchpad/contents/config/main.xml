@@ -20,6 +20,14 @@
       <min>2</min>
       <max>6</max>
     </entry>
+    <entry name="backdrop" type="Bool">
+      <label>Tint the panel and the search pill: solid along the top, clearing towards the bottom.</label>
+      <default>true</default>
+    </entry>
+    <entry name="backdropRadius" type="Int">
+      <label>Corner radius the tint is drawn with; match the popup radius of the Plasma theme.</label>
+      <default>20</default>
+    </entry>
     <entry name="previewQuery" type="String">
       <label>For screenshots and tests: open with this text already typed into the search.</label>
       <default></default>
