@@ -7,9 +7,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.kitemmodels as KItemModels
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.extras as PlasmaExtras
+import org.kde.plasma.private.clipboard as Clipboard
 import org.kde.plasma.private.kicker as Kicker
 
 PlasmaCore.Dialog {
@@ -24,7 +26,17 @@ PlasmaCore.Dialog {
 
     readonly property int cellWidth: Kirigami.Units.gridUnit * 7
     readonly property int cellHeight: Kirigami.Units.iconSizes.huge + Kirigami.Units.gridUnit * 2 + Kirigami.Units.smallSpacing
-    readonly property bool searching: search.text.length > 0
+    // the clipboard button of the search pill swaps apps for the clipboard history; the search then filters it
+    property bool clipboardMode: false
+    readonly property bool searching: !clipboardMode && search.text.length > 0
+    readonly property Clipboard.HistoryModel clipboard: Clipboard.HistoryModel {}
+    // the history model does not filter by text itself; this is the filter Plasma's own clipboard popup puts on it
+    readonly property KItemModels.KSortFilterProxyModel clipboardFiltered: KItemModels.KSortFilterProxyModel {
+        sourceModel: panel.clipboard
+        filterRoleName: "display"
+        // the text is matched literally, not as a pattern
+        filterRegularExpression: RegExp(panel.clipboardMode ? search.text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") : "", "i")
+    }
     // -1 = Favourites, otherwise a row of rootModel
     property int category: 0
 
@@ -74,7 +86,8 @@ PlasmaCore.Dialog {
 
     function open(anchor: Item) {
         anchorItem = anchor;
-        search.text = previewQuery;
+        clipboardMode = previewQuery === ":clipboard";
+        search.text = clipboardMode ? "" : previewQuery;
         category = 0;
         grid.currentIndex = -1;
         grid.navigated = false;
@@ -84,11 +97,11 @@ PlasmaCore.Dialog {
         searchWindow.visible = true;
         focusSearch();
     }
-
     function close() {
         searchWindow.visible = false;
         visible = false;
         search.text = "";
+        clipboardMode = false;
     }
 
     function focusSearch() {
@@ -107,36 +120,46 @@ PlasmaCore.Dialog {
     function key(event): bool {
         switch (event.key) {
         case Qt.Key_Escape:
-            if (searching) {
+            if (search.text.length > 0) {
                 search.text = "";
+            } else if (clipboardMode) {
+                clipboardMode = false;
             } else {
                 close();
             }
             return true;
+        case Qt.Key_Delete:
+            if (clipboardMode && clips.currentItem) {
+                clipboard.remove(clips.currentItem.uuid);
+                return true;
+            }
+            return false;
         case Qt.Key_Return:
         case Qt.Key_Enter:
-            if (searching) {
+            if (clipboardMode) {
+                clips.pick(clips.currentIndex);
+            } else if (searching) {
                 launch(results.model, Math.max(0, results.currentIndex));
             } else {
                 launch(grid.model, grid.currentIndex);
             }
             return true;
         case Qt.Key_Down:
-            searching ? results.move(1) : grid.move(columns);
+            clipboardMode ? clips.move(1) : searching ? results.move(1) : grid.move(columns);
             return true;
         case Qt.Key_Up:
-            searching ? results.move(-1) : grid.move(-columns);
+            clipboardMode ? clips.move(-1) : searching ? results.move(-1) : grid.move(-columns);
             return true;
         case Qt.Key_Tab:
-            searching ? results.move(1) : grid.move(1);
+            clipboardMode ? clips.move(1) : searching ? results.move(1) : grid.move(1);
             return true;
         case Qt.Key_Backtab:
-            searching ? results.move(-1) : grid.move(-1);
+            clipboardMode ? clips.move(-1) : searching ? results.move(-1) : grid.move(-1);
             return true;
         case Qt.Key_Right:
         case Qt.Key_Left:
             // in a search these move the text cursor; results are a list, walked with up and down
-            if (searching) {
+            if (searching || clipboardMode) {
                 return false;
             }
             grid.move(event.key === Qt.Key_Right ? 1 : -1);
@@ -182,7 +205,7 @@ PlasmaCore.Dialog {
                 id: search
                 anchors {
                     left: searchIcon.right
-                    right: parent.right
+                    right: clipButton.left
                     leftMargin: Kirigami.Units.largeSpacing
                     rightMargin: Kirigami.Units.largeSpacing
                     verticalCenter: parent.verticalCenter
@@ -196,8 +219,11 @@ PlasmaCore.Dialog {
                 Accessible.name: i18n("Search applications")
 
                 onTextChanged: {
-                    panel.runnerModel.query = text;
+                    if (!panel.clipboardMode) {
+                        panel.runnerModel.query = text;
+                    }
                     results.currentIndex = 0;
+                    clips.currentIndex = 0;
                 }
                 Keys.onPressed: event => {
                     event.accepted = panel.key(event);
@@ -207,12 +233,50 @@ PlasmaCore.Dialog {
                     anchors.fill: parent
                     verticalAlignment: Text.AlignVCenter
                     visible: search.text.length === 0
-                    text: i18n("Apps")
+                    text: panel.clipboardMode ? i18n("Clipboard") : i18n("Apps")
                     font: search.font
                     opacity: 0.55
                 }
             }
+
+            Rectangle {
+                id: clipButton
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: Kirigami.Units.smallSpacing
+                width: Kirigami.Units.gridUnit * 2.2
+                height: width
+                radius: width / 2
+                color: panel.clipboardMode ? Kirigami.Theme.highlightColor
+                     : Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, clipArea.containsMouse ? 0.16 : 0.0)
+                Accessible.role: Accessible.Button
+                Accessible.name: i18n("Clipboard history")
+
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    width: Kirigami.Units.iconSizes.smallMedium
+                    height: width
+                    source: "edit-paste-symbolic"
+                    isMask: true
+                    color: panel.clipboardMode ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+                }
+                MouseArea {
+                    id: clipArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        panel.clipboardMode = !panel.clipboardMode;
+                        search.forceActiveFocus();
+                    }
+                }
+            }
         }
+    }
+
+    onClipboardModeChanged: {
+        search.text = "";
+        runnerModel.query = "";
+        clips.currentIndex = 0;
     }
 
     mainItem: FocusScope {
@@ -244,7 +308,7 @@ PlasmaCore.Dialog {
             anchors.fill: parent
             anchors.margins: Kirigami.Units.gridUnit
             spacing: Kirigami.Units.largeSpacing
-            visible: !panel.searching
+            visible: !panel.searching && !panel.clipboardMode
 
             // wraps onto a second line rather than hiding categories off the edge
             Flow {
@@ -391,7 +455,7 @@ PlasmaCore.Dialog {
                 id: row
                 required property int index
                 required property var model
-                width: results.width
+                width: results.width - (resultScroll.visible ? resultScroll.width + Kirigami.Units.smallSpacing : 0)
                 height: Kirigami.Units.iconSizes.medium + Kirigami.Units.smallSpacing * 4
 
                 Rectangle {
@@ -454,7 +518,144 @@ PlasmaCore.Dialog {
                 text: i18n("No matches")
             }
 
-            PlasmaComponents.ScrollBar.vertical: PlasmaComponents.ScrollBar {}
+            PlasmaComponents.ScrollBar.vertical: PlasmaComponents.ScrollBar { id: resultScroll }
+        }
+
+        // ---- clipboard history: pick an entry to make it the current clipboard ----
+        ListView {
+            id: clips
+            anchors.fill: parent
+            anchors.margins: Kirigami.Units.gridUnit
+            visible: panel.clipboardMode
+            clip: true
+            spacing: 2
+            boundsBehavior: Flickable.StopAtBounds
+            model: panel.clipboardMode ? panel.clipboardFiltered : null
+            currentIndex: 0
+            highlightMoveDuration: 0
+            onCountChanged: if (currentIndex < 0 || currentIndex >= count) {
+                currentIndex = 0;
+            }
+
+            function move(step: int) {
+                if (count === 0) {
+                    return;
+                }
+                currentIndex = Math.max(0, Math.min(count - 1, currentIndex + step));
+                positionViewAtIndex(currentIndex, ListView.Contain);
+            }
+            function pick(index: int) {
+                if (index < 0 || index >= count) {
+                    return;
+                }
+                const item = itemAtIndex(index);
+                if (item) {
+                    panel.clipboard.moveToTop(item.uuid);
+                    panel.close();
+                }
+            }
+
+            header: PlasmaComponents.Label {
+                width: clips.width
+                height: Kirigami.Units.gridUnit * 1.6
+                verticalAlignment: Text.AlignTop
+                text: i18n("Clipboard history — Enter copies the selected entry, Delete removes it")
+                font: Kirigami.Theme.smallFont
+                opacity: 0.6
+                elide: Text.ElideRight
+            }
+
+            delegate: Item {
+                id: clipRow
+                required property int index
+                required property var model
+                required property var uuid
+                required property var decoration
+                required property size imageSize
+                readonly property bool isImage: imageSize.width > 0 && imageSize.height > 0
+                // rows stop short of the scroll bar, so it never covers the remove button
+                width: clips.width - (clipScroll.visible ? clipScroll.width + Kirigami.Units.smallSpacing : 0)
+                height: (isImage ? preview.height : clipText.implicitHeight) + Kirigami.Units.smallSpacing * 4
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Kirigami.Units.gridUnit * 0.6
+                    color: Kirigami.Theme.textColor
+                    opacity: clipRow.ListView.isCurrentItem ? 0.14 : 0
+                }
+                PlasmaComponents.Label {
+                    id: clipText
+                    visible: !clipRow.isImage
+                    anchors {
+                        left: parent.left
+                        right: removeButton.left
+                        leftMargin: Kirigami.Units.largeSpacing
+                        rightMargin: Kirigami.Units.smallSpacing
+                        verticalCenter: parent.verticalCenter
+                    }
+                    // long entries are cut before layout, they can be megabytes
+                    text: (clipRow.model.display ?? "").slice(0, 400).trim()
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 3
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
+                }
+                Image {
+                    id: preview
+                    visible: clipRow.isImage
+                    x: Kirigami.Units.largeSpacing
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: Kirigami.Units.gridUnit * 4
+                    width: clipRow.isImage ? Math.min(Math.round(height * clipRow.imageSize.width / clipRow.imageSize.height), parent.width - Kirigami.Units.gridUnit * 4) : 0
+                    source: clipRow.isImage ? clipRow.decoration : ""
+                    sourceSize.height: height
+                    fillMode: Image.PreserveAspectFit
+                    cache: false
+                    asynchronous: true
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onPositionChanged: clips.currentIndex = clipRow.index
+                    onClicked: clips.pick(clipRow.index)
+                }
+                Rectangle {
+                    id: removeButton
+                    anchors.right: parent.right
+                    anchors.rightMargin: Kirigami.Units.smallSpacing * 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Kirigami.Units.gridUnit * 1.4
+                    height: width
+                    radius: width / 2
+                    visible: clipRow.ListView.isCurrentItem
+                    color: Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g, Kirigami.Theme.textColor.b, removeArea.containsMouse ? 0.25 : 0.12)
+                    Accessible.role: Accessible.Button
+                    Accessible.name: i18n("Remove")
+                    Kirigami.Icon {
+                        anchors.centerIn: parent
+                        width: Kirigami.Units.iconSizes.small
+                        height: width
+                        source: "window-close-symbolic"
+                        isMask: true
+                        color: Kirigami.Theme.textColor
+                    }
+                    MouseArea {
+                        id: removeArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: panel.clipboard.remove(clipRow.uuid)
+                    }
+                }
+            }
+
+            PlasmaComponents.Label {
+                anchors.centerIn: parent
+                visible: clips.count === 0
+                opacity: 0.6
+                text: search.text.length > 0 ? i18n("No matches") : i18n("The clipboard history is empty")
+            }
+
+            PlasmaComponents.ScrollBar.vertical: PlasmaComponents.ScrollBar { id: clipScroll }
         }
 
         PlasmaExtras.Menu {

@@ -166,6 +166,9 @@ pure QML on Plasma's own launcher models, so favourites are the ones Plasma alre
   Enter opens it, up and down change the selection, left and right move the text cursor.
 - With nothing typed, the arrow keys and Tab move through the grid. Esc clears the search, then closes.
 - Right-click an app or a result to add it to or remove it from Favorites.
+- The clipboard button in the search pill swaps the apps for Plasma's clipboard history, text and images.
+  Typing filters it, Enter or a click makes the selected entry the current clipboard, Delete removes it,
+  Esc goes back to the apps.
 - It answers the Meta key like any Plasma launcher. Add it by hand with "Add or Manage Widgets", or let
   `--layout` put it in the top bar.
 - `columns` and `rows` in its config set the grid size (7 x 3 by default).
