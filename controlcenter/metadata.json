@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Category": "System Information",
+        "Description": "Network, Bluetooth, Do Not Disturb, dark mode, media, brightness and volume in one glass panel",
+        "Icon": "configure",
+        "Id": "org.liquidglass.controlcenter",
+        "License": "GPL-3.0-or-later",
+        "Name": "Control Center (Liquid Glass)",
+        "Website": "https://github.com/artyommargaryan/plasma-liquid-glass"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

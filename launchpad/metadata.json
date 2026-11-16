@@ -1,0 +1,16 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Category": "Application Launchers",
+        "Description": "A centred glass panel with search, category pills, favourites and an app grid",
+        "Icon": "view-app-grid",
+        "Id": "org.liquidglass.launchpad",
+        "License": "GPL-3.0-or-later",
+        "Name": "Launchpad (Liquid Glass)",
+        "Website": "https://github.com/artyommargaryan/plasma-liquid-glass"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-Provides": [
+        "org.kde.plasma.launchermenu"
+    ]
+}

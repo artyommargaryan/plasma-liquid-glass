@@ -56,6 +56,8 @@ What it changes:
 | Compiled effect, id `better_blur_dx_local` | `/usr` (KWin plugin dirs) | — |
 | Menu style plugin `libliquidglassstyle.so`, widget style `LiquidGlass` | Qt plugin dir (`…/qt6/plugins/styles`), `~/.config/kdeglobals` | previous style in `~/.local/share/plasma-liquid-glass/previous-widget-style` |
 | Dock widget "Icons-Only Task Manager (Liquid Glass)" with hover magnification (Plasma 6.8 only; used by `--layout`) | `/usr` (Plasma applet dirs) | — |
+| Launchpad widget "Launchpad (Liquid Glass)" (used by `--layout`) | `~/.local/share/plasma/plasmoids/org.liquidglass.launchpad` | — |
+| Control Center widget "Control Center (Liquid Glass)" (used by `--layout`) | `~/.local/share/plasma/plasmoids/org.liquidglass.controlcenter` | — |
 | Effect source | `~/.local/share/plasma-liquid-glass/kwin-effect` | — |
 | Popup and dock artwork | `~/.local/share/plasma/desktoptheme/WhiteSur{,-dark}/` | `*.pre-liquid-glass` next to each file |
 | Menu frame and menu settings of the WhiteSur Kvantum theme (light and dark) | `~/.config/Kvantum/WhiteSur/` | `*.pre-liquid-glass` next to each file |
@@ -153,6 +155,36 @@ frame (for example `KV_FILL='#f4f4f4' KV_FILLOP=0.16`) and set `text.normal.colo
 
 After replacing a theme file: `rm ~/.cache/ksvg-elements` and `systemctl --user restart plasma-plasmashell.service`.
 Switching the Plasma theme away and back is not enough.
+
+## Launchpad
+
+[`launchpad/`](launchpad) is a launcher widget written for this project: a button that opens, in the middle of the
+screen, a search pill and under it a glass panel with category pills, a row of favourites and the app grid. It is
+pure QML on Plasma's own launcher models, so favourites are the ones Plasma already knows and nothing is compiled.
+
+- Type to search (apps, settings, calculator): the panel becomes a list of results with the top one selected.
+  Enter opens it, up and down change the selection, left and right move the text cursor.
+- With nothing typed, the arrow keys and Tab move through the grid. Esc clears the search, then closes.
+- Right-click an app or a result to add it to or remove it from Favorites.
+- It answers the Meta key like any Plasma launcher. Add it by hand with "Add or Manage Widgets", or let
+  `--layout` put it in the top bar.
+- `columns` and `rows` in its config set the grid size (7 x 3 by default).
+
+## Control Center
+
+[`controlcenter/`](controlcenter) is a second widget written for this project: a top-bar button whose glass popup
+gathers the everyday controls. Like the Launchpad it is pure QML, here on the modules Plasma's own network,
+Bluetooth, notification, brightness, media and volume widgets use.
+
+- **Network**: Wi-Fi on/off where there is a wireless card; on a wired machine it shows the connection and opens
+  the network settings (it does not switch networking off).
+- **Bluetooth**, **Dark Mode** (Plasma's own light/dark switch), **Do Not Disturb** (one hour) and
+  **Mute Microphone** as toggles; a button into System Settings.
+- **Media**: cover, title and artist of what is playing, with previous / play-pause / next.
+- **Display**: a brightness bar for every screen that can be dimmed. **Sound**: volume and mute of the output in use.
+
+Bars take a click, a drag or the mouse wheel. Add it by hand with "Add or Manage Widgets", or let `--layout` put
+it next to the system tray.
 
 ## Known limits
 

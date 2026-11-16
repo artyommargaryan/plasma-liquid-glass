@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <entry name="icon" type="String">
+      <label>Icon of the panel button.</label>
+      <default>view-app-grid</default>
+    </entry>
+    <entry name="columns" type="Int">
+      <label>Apps per row.</label>
+      <default>7</default>
+      <min>4</min>
+      <max>10</max>
+    </entry>
+    <entry name="rows" type="Int">
+      <label>Rows of apps visible without scrolling (below the favourites row).</label>
+      <default>3</default>
+      <min>2</min>
+      <max>6</max>
+    </entry>
+    <entry name="previewQuery" type="String">
+      <label>For screenshots and tests: open with this text already typed into the search.</label>
+      <default></default>
+    </entry>
+    <entry name="favoritesPortedToKAstats" type="Bool">
+      <default>true</default>
+    </entry>
+  </group>
+</kcfg>

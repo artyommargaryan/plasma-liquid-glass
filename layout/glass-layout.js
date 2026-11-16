@@ -10,12 +10,16 @@ for (var s = 0; s < screenCount; s++) {
     bar.lengthMode = "fill";
     bar.hiding = "none";
     bar.floating = false;
-    bar.addWidget("org.kde.plasma.kickoff");
+    // the Launchpad widget install.sh puts in place; Plasma's own launcher if it is missing
+    bar.addWidget(knownWidgetTypes.indexOf("org.liquidglass.launchpad") >= 0 ? "org.liquidglass.launchpad" : "org.kde.plasma.kickoff");
     var appmenu = bar.addWidget("org.kde.plasma.appmenu");
     appmenu.currentConfigGroup = ["Appearance"];
     appmenu.writeConfig("compactView", false);
     bar.addWidget("org.kde.plasma.panelspacer");
     bar.addWidget("org.kde.plasma.systemtray");
+    if (knownWidgetTypes.indexOf("org.liquidglass.controlcenter") >= 0) {
+        bar.addWidget("org.liquidglass.controlcenter");
+    }
     bar.addWidget("org.kde.plasma.digitalclock");
     bar.height = 32;   // after the widgets, or their minimum size overrides it
     bar.screen = s;

@@ -28,6 +28,13 @@ if [ "$(kreadconfig6 --file kdeglobals --group KDE --key widgetStyle)" = LiquidG
   kwriteconfig6 --notify --file kdeglobals --group KDE --key widgetStyle "$prev"; echo "widget style back to $prev"
 fi
 rm -f "$PW"
+# the Launchpad widget is removed only when no panel uses it, or that panel would lose its launcher
+if grep -q 'plugin=org.liquidglass.launchpad' "$CONF/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null; then
+  echo "Launchpad widget kept: a panel still uses it (swap it for another launcher, then remove $DATA/plasma/plasmoids/org.liquidglass.launchpad)"
+else rm -rf "$DATA/plasma/plasmoids/org.liquidglass.launchpad"; fi
+if grep -q 'plugin=org.liquidglass.controlcenter' "$CONF/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null; then
+  echo "Control Center widget kept: a panel still uses it (remove it from the panel, then remove $DATA/plasma/plasmoids/org.liquidglass.controlcenter)"
+else rm -rf "$DATA/plasma/plasmoids/org.liquidglass.controlcenter"; fi
 rm -rf "$DATA/plasma/look-and-feel/org.liquidglass.whitesur" "$DATA/plasma/look-and-feel/org.liquidglass.whitesur-dark"
 PG="$DATA/plasma-liquid-glass/previous-global-themes"
 if [ -f "$PG" ]; then
