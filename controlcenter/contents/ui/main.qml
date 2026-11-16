@@ -42,6 +42,27 @@ PlasmoidItem {
     NotificationManager.Settings { id: notifications }
     Brightness.ScreenBrightnessControl { id: screens }
     Mpris.Mpris2Model { id: players }
+    NotificationManager.Notifications {
+        id: history
+        limit: 40
+        showExpired: true
+        showDismissed: true
+        showNotifications: true
+        showJobs: false
+        groupMode: NotificationManager.Notifications.GroupDisabled
+        sortMode: NotificationManager.Notifications.SortByDate
+        sortOrder: Qt.DescendingOrder
+    }
+
+    // "" = the tiles, otherwise the name of the detail page on show
+    property string page: ""
+    // always back on the tiles the next time it opens
+    onExpandedChanged: if (!root.expanded) {
+        root.page = Plasmoid.configuration.previewOpen ? Plasmoid.configuration.previewPage : "";
+    }
+    Component.onCompleted: if (Plasmoid.configuration.previewOpen) {
+        page = Plasmoid.configuration.previewPage;
+    }
 
     // Do Not Disturb ends at a point in time; this makes the tile notice when that point passes
     property date now: new Date()
@@ -77,10 +98,28 @@ PlasmoidItem {
         Layout.maximumWidth: Layout.preferredWidth
         Layout.maximumHeight: Layout.preferredHeight
 
+        BluetoothPage {
+            anchors.fill: parent
+            visible: root.page === "bluetooth"
+            onBack: root.page = ""
+            onSettingsRequested: root.openSettings("kcm_bluetooth")
+        }
+        NotificationsPage {
+            anchors.fill: parent
+            visible: root.page === "notifications"
+            history: history
+            onVisibleChanged: if (visible) {
+                history.lastRead = new Date();
+            }
+            onBack: root.page = ""
+            onSettingsRequested: root.openSettings("kcm_notifications")
+        }
+
         ColumnLayout {
             id: column
             anchors.fill: parent
             spacing: root.gap
+            visible: root.page === ""
 
             // ---- switches on the left, the playing media on the right ----
             RowLayout {
@@ -121,8 +160,10 @@ PlasmoidItem {
                             title: i18n("Bluetooth")
                             on: BluezQt.Manager.bluetoothOperational && !BluezQt.Manager.bluetoothBlocked
                             status: !enabled ? i18n("No adapter") : (on ? i18np("%1 device connected", "%1 devices connected", BluezQt.Manager.connectedDevices.length) : i18n("Off"))
-                            enabled: BluezQt.Manager.adapters.length > 0
-                            onClicked: BluezQt.Manager.bluetoothBlocked = !BluezQt.Manager.bluetoothBlocked
+                            // the knob switches Bluetooth; the rest of the tile opens the switch and paired devices
+                            splitKnob: BluezQt.Manager.adapters.length > 0
+                            onKnobClicked: BluezQt.Manager.bluetoothBlocked = !BluezQt.Manager.bluetoothBlocked
+                            onClicked: root.page = "bluetooth"
                         }
 
                         ToggleTile {
@@ -240,13 +281,11 @@ PlasmoidItem {
                 ToggleTile {
                     Layout.preferredWidth: full.unit
                     Layout.preferredHeight: full.unit
-                    readonly property var source: Volume.PreferredDevice.source
-                    iconName: on ? "microphone-sensitivity-muted-symbolic" : "audio-input-microphone-symbolic"
-                    title: i18n("Mute Microphone")
-                    on: !!source && source.muted
-                    status: !source ? i18n("No microphone") : (on ? i18n("Muted") : i18n("Live"))
-                    enabled: !!source
-                    onClicked: source.muted = !source.muted
+                    iconName: "notifications-symbolic"
+                    title: i18n("Notifications")
+                    on: history.unreadNotificationsCount > 0
+                    status: history.count === 0 ? i18n("None") : i18np("%1 notification", "%1 notifications", history.count)
+                    onClicked: root.page = "notifications"
                 }
                 ToggleTile {
                     Layout.preferredWidth: full.unit
@@ -335,6 +374,22 @@ PlasmoidItem {
                             onMoved: value => {
                                 full.sink.volume = Math.round(value);
                                 full.sink.muted = value <= 0;
+                            }
+                        }
+                        Knob {
+                            id: micKnob
+                            readonly property var source: Volume.PreferredDevice.source
+                            width: Kirigami.Units.gridUnit * 1.5
+                            visible: !!source
+                            iconName: on ? "microphone-sensitivity-muted-symbolic" : "audio-input-microphone-symbolic"
+                            on: !!source && source.muted
+                            pressed: micArea.pressed
+                            Accessible.role: Accessible.Button
+                            Accessible.name: i18n("Mute microphone")
+                            MouseArea {
+                                id: micArea
+                                anchors.fill: parent
+                                onClicked: micKnob.source.muted = !micKnob.source.muted
                             }
                         }
                         Knob {

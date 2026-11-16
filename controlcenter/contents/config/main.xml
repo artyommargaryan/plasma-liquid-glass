@@ -8,6 +8,10 @@
       <label>Icon of the panel button.</label>
       <default>configure</default>
     </entry>
+    <entry name="previewPage" type="String">
+      <label>For screenshots and tests: the page to show when previewOpen opens the panel ("bluetooth", "notifications" or empty).</label>
+      <default></default>
+    </entry>
     <entry name="previewOpen" type="Bool">
       <label>For screenshots and tests: open the panel as soon as the widget loads.</label>
       <default>false</default>

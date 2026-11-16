@@ -13,7 +13,11 @@ Tile {
     property bool on: false
     // a narrow tile shows the knob alone, the title moves to the tooltip
     readonly property bool compact: width < Kirigami.Units.gridUnit * 7
+    // With splitKnob the round knob is a button of its own (knobClicked), and clicked() is for the rest of the tile:
+    // the knob switches, the tile opens the details.
+    property bool splitKnob: false
     signal clicked()
+    signal knobClicked()
 
     hovered: area.containsMouse
     opacity: enabled ? 1 : 0.45
@@ -27,7 +31,15 @@ Tile {
         x: tile.compact ? (parent.width - width) / 2 : Kirigami.Units.largeSpacing
         iconName: tile.iconName
         on: tile.on
-        pressed: area.pressed
+        pressed: tile.splitKnob ? knobArea.pressed : area.pressed
+        z: 1
+        MouseArea {
+            id: knobArea
+            anchors.fill: parent
+            enabled: tile.splitKnob
+            visible: tile.splitKnob
+            onClicked: tile.knobClicked()
+        }
     }
 
     Column {
@@ -62,6 +74,7 @@ Tile {
         active: tile.compact
         mainText: tile.title
         subText: tile.status
+        z: 0
         MouseArea {
             id: area
             anchors.fill: parent

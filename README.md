@@ -178,10 +178,14 @@ Bluetooth, notification, brightness, media and volume widgets use.
 
 - **Network**: Wi-Fi on/off where there is a wireless card; on a wired machine it shows the connection and opens
   the network settings (it does not switch networking off).
-- **Bluetooth**, **Dark Mode** (Plasma's own light/dark switch), **Do Not Disturb** (one hour) and
-  **Mute Microphone** as toggles; a button into System Settings.
+- **Bluetooth**: the round knob switches it on and off; the rest of the tile opens a page with your paired
+  devices, where a click connects or disconnects one.
+- **Notifications**: opens the recent notifications, newest first; click one to act on it, or clear them.
+- **Dark Mode** (Plasma's own light/dark switch) and **Do Not Disturb** (one hour) as toggles; a button into
+  System Settings.
 - **Media**: cover, title and artist of what is playing, with previous / play-pause / next.
-- **Display**: a brightness bar for every screen that can be dimmed. **Sound**: volume and mute of the output in use.
+- **Display**: a brightness bar for every screen that can be dimmed. **Sound**: volume and mute of the output in use, and a
+  microphone mute.
 
 Bars take a click, a drag or the mouse wheel. Add it by hand with "Add or Manage Widgets", or let `--layout` put
 it next to the system tray.
