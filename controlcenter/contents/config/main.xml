@@ -12,6 +12,10 @@
       <label>For screenshots and tests: the page to show when previewOpen opens the panel ("bluetooth", "notifications" or empty).</label>
       <default></default>
     </entry>
+    <entry name="previewHideMedia" type="Bool">
+      <label>For screenshots: show the media tile as if nothing were playing.</label>
+      <default>false</default>
+    </entry>
     <entry name="previewOpen" type="Bool">
       <label>For screenshots and tests: open the panel as soon as the widget loads.</label>
       <default>false</default>

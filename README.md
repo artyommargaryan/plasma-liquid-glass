@@ -8,7 +8,16 @@ dark tuning.
 |---|---|
 | ![Light mode: top bar, glass menu and dock](look-and-feel/org.liquidglass.whitesur/contents/previews/fullscreenpreview.jpg) | ![Dark mode: top bar, glass menu and dock](look-and-feel/org.liquidglass.whitesur-dark/contents/previews/fullscreenpreview.jpg) |
 
-![Dock in dark mode](docs/dock-dark.png)
+![Dock with hover magnification, dark mode](docs/dock-dark.png)
+
+| Launchpad | Launchpad search |
+|---|---|
+| ![Launchpad in dark mode: search pill, category pills, favourites and the app grid](docs/launchpad-dark.jpg) | ![Launchpad search results in dark mode](docs/launchpad-search-dark.jpg) |
+| ![Launchpad in light mode](docs/launchpad-light.jpg) | ![Dolphin with the Finder-like layout](docs/dolphin-dark.jpg) |
+
+| Control Center | Application menu |
+|---|---|
+| ![Control Center: network, Bluetooth, dark mode, media, Do Not Disturb, brightness and volume](docs/control-center-dark.png) | ![A glass application menu with 16px corners](docs/menu-dark.png) |
 
 It is made of three parts:
 
@@ -225,6 +234,6 @@ commands to remove the compiled effect and the menu style plugin from `/usr`.
 - [macos-tahoe-liquid-kde](https://github.com/lestercorderomurillo/macos-tahoe-liquid-kde) by Lester Cordero Murillo — the menu style in `menu-style/` is adapted from its menu style plugin (GPL-3.0).
 - [plasma-desktop](https://invent.kde.org/plasma/plasma-desktop) by KDE — `dock/` is its task manager applet (GPL-2.0-or-later) with hover magnification added, see [`dock/README.md`](dock/README.md).
 - [Dolphin](https://invent.kde.org/system/dolphin) by KDE — `dolphin/dolphinui.rc` is its toolbar definition (GPL-2.0-or-later) with a different button set.
-- The Global Theme preview images show the KDE Plasma wallpaper *Hanabi* by Krystian Zajdel (CC-BY-SA-4.0).
+- The screenshots and Global Theme preview images show the KDE Plasma wallpaper *Hanabi* by Krystian Zajdel (CC-BY-SA-4.0).
 
 GPL-3.0, see [LICENSE](LICENSE).

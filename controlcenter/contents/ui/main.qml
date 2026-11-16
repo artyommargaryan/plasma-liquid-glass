@@ -114,7 +114,7 @@ PlasmoidItem {
     fullRepresentation: Item {
         id: full
         readonly property var sink: Volume.PreferredDevice.sink
-        readonly property var player: players.currentPlayer
+        readonly property var player: Plasmoid.configuration.previewHideMedia ? null : players.currentPlayer
         readonly property bool playing: !!player && player.playbackStatus === Mpris.PlaybackStatus.Playing
         // tiles are sized from the width the popup really gives, so they always fit it
         readonly property real unit: Math.floor((width - root.gap * 3) / 4)

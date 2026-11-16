@@ -38,7 +38,9 @@ Item {
             height: width
             source: bar.iconName
             isMask: true
-            color: Kirigami.Theme.backgroundColor
+            // dark on a light fill and light on a dark one; a theme's background colour is not always the opposite
+            // of its text colour (light themes with dark glass popups draw light text)
+            color: Kirigami.Theme.textColor.hslLightness > 0.5 ? "#1e1e1e" : "#f2f2f2"
         }
     }
 
