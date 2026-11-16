@@ -39,8 +39,8 @@ Other distributions should work but need their build dependencies installed by h
     cd plasma-liquid-glass
     ./install.sh
 
-The installer asks for `sudo` twice at most: for build dependencies (Fedora only) and to install the compiled effect
-into `/usr`. Everything else goes into your home directory. It then restarts the Plasma shell so the new artwork shows.
+The installer asks for `sudo` for build dependencies (Fedora only) and to install the compiled effect and the menu
+style plugin into `/usr`. Everything else goes into your home directory. It then restarts the Plasma shell so the new artwork shows.
 
 Options: `--layout` (also replace your panels, see below), `--skip-deps` (dependencies already installed, or not on
 Fedora), `--skip-effect` (theme files, scripts and settings only), `--no-reload` (do not touch the running session).
@@ -54,6 +54,8 @@ What it changes:
 | What | Where | Original kept as |
 |---|---|---|
 | Compiled effect, id `better_blur_dx_local` | `/usr` (KWin plugin dirs) | — |
+| Menu style plugin `libliquidglassstyle.so`, widget style `LiquidGlass` | Qt plugin dir (`…/qt6/plugins/styles`), `~/.config/kdeglobals` | previous style in `~/.local/share/plasma-liquid-glass/previous-widget-style` |
+| Dock widget "Icons-Only Task Manager (Liquid Glass)" with hover magnification (Plasma 6.8 only; used by `--layout`) | `/usr` (Plasma applet dirs) | — |
 | Effect source | `~/.local/share/plasma-liquid-glass/kwin-effect` | — |
 | Popup and dock artwork | `~/.local/share/plasma/desktoptheme/WhiteSur{,-dark}/` | `*.pre-liquid-glass` next to each file |
 | Menu frame and menu settings of the WhiteSur Kvantum theme (light and dark) | `~/.config/Kvantum/WhiteSur/` | `*.pre-liquid-glass` next to each file |
@@ -121,11 +123,21 @@ and `bounds.py` need PySide6). Each takes an unpacked `.svg` and writes an `.svg
     dock_border.py  R edge lit back in.svgz out.svgz [shadeWidth shadeOpacity]   light line round the dock
     kv_menu.py      R in.svg out.svg [border outline SH]   menu frame of a Kvantum theme (plain .svg in and out)
 
-### Application menus (Kvantum)
+### Application menus
 
-Menus are drawn by Kvantum, not by the Plasma theme. The installer adapts the WhiteSur Kvantum theme (light and
-dark) so menus get the same glass, a clean 10px corner and an even edge line. What it does, in case you want to do
-the same to another Kvantum theme:
+Menus are drawn by the Qt widget style, not by the Plasma theme. The installer builds a small style plugin,
+[`menu-style/`](menu-style), and selects it as the widget style `LiquidGlass`: it is Kvantum for everything except
+the menu panel, which it draws itself with a 16px corner, a soft shadow and a light edge line, and for which it
+hands KWin a blur shape cut from the same outline. Kvantum alone caps the blur corner at 10px and stretches the
+frame art. The body colour still comes from the Kvantum theme, so the steps below still apply. It acts when the
+active Kvantum theme's name starts with `WhiteSur`; list others in `LIQUIDGLASS_MENU_THEMES` (comma separated).
+Other knobs, all environment variables: `LIQUIDGLASS_MENU_RADIUS` (16), `LIQUIDGLASS_MENU_INSET` (5),
+`LIQUIDGLASS_MENU_SHADOW` (4), `LIQUIDGLASS_MENU_LINE` (56). After a Qt update that changes the plugin ABI,
+re-run `./install.sh`.
+
+Without the plugin (it failed to build, or `--skip-effect` on a system that never had it) menus stay plain
+Kvantum: the installer adapts the WhiteSur Kvantum theme (light and dark) so menus get the same glass, a clean
+10px corner and an even edge line. What it does, in case you want to do the same to another Kvantum theme:
 
     python3 tools/kv_menu.py 8 Theme.svg Theme.svg.new 0 0 4      # then replace Theme.svg with the result
     python3 tools/kv_config.py Theme.kvconfig Theme.kvconfig.new  # frame.*=15, menu_blur_radius=10, reduce_menu_opacity=0
@@ -153,13 +165,15 @@ Switching the Plasma theme away and back is not enough.
     ./uninstall.sh
 
 Restores the original theme files, switches the stock blur back on and removes the scripts and units. It prints the
-command to remove the compiled effect from `/usr`.
+commands to remove the compiled effect and the menu style plugin from `/usr`.
 
 ## Credits and licence
 
 - [Better Blur DX](https://github.com/xarblu/kwin-effects-better-blur-dx) by xarblu and contributors — the effect this builds on.
 - [WhiteSur-kde](https://github.com/vinceliuice/WhiteSur-kde) by vinceliuice — the theme files in `theme/` are modified copies of its artwork.
 - [liquid-glass](https://github.com/ryohsuke1231/liquid-glass) (GNOME extension) and [hyprglass](https://github.com/hyprnux/hyprglass) — the look and the lens technique.
+- [macos-tahoe-liquid-kde](https://github.com/lestercorderomurillo/macos-tahoe-liquid-kde) by Lester Cordero Murillo — the menu style in `menu-style/` is adapted from its menu style plugin (GPL-3.0).
+- [plasma-desktop](https://invent.kde.org/plasma/plasma-desktop) by KDE — `dock/` is its task manager applet (GPL-2.0-or-later) with hover magnification added, see [`dock/README.md`](dock/README.md).
 - The Global Theme preview images show the KDE Plasma wallpaper *Hanabi* by Krystian Zajdel (CC-BY-SA-4.0).
 
 GPL-3.0, see [LICENSE](LICENSE).

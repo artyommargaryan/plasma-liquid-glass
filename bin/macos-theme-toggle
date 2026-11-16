@@ -60,8 +60,10 @@ else warn "icon theme $icons not installed - skipped"; fi
 # 4. Kvantum + widget style re-pin.
 if command -v kvantummanager >/dev/null && [ -d "$HOME/.config/Kvantum/WhiteSur" ]; then
   kvantummanager --set "$kv" >/dev/null 2>&1
-  if [ "$(kreadconfig6 --file kdeglobals --group KDE --key widgetStyle 2>/dev/null)" != "kvantum" ]; then
-    kwriteconfig6 --notify --file kdeglobals --group KDE --key widgetStyle kvantum
+  # LiquidGlass = Kvantum plus our own menu panel (plasma-liquid-glass/menu-style); plain Kvantum if it is not installed.
+  style=kvantum; [ -f "$(qtpaths6 --query QT_INSTALL_PLUGINS 2>/dev/null)/styles/libliquidglassstyle.so" ] && style=LiquidGlass
+  if [ "$(kreadconfig6 --file kdeglobals --group KDE --key widgetStyle 2>/dev/null)" != "$style" ]; then
+    kwriteconfig6 --notify --file kdeglobals --group KDE --key widgetStyle "$style"
   fi
   dbus-send --session --type=signal /KGlobalSettings org.kde.KGlobalSettings.notifyChange int32:2 int32:0
 else warn "kvantum or WhiteSur kvantum theme missing - skipped"; fi

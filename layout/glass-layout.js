@@ -27,7 +27,14 @@ for (var s = 0; s < screenCount; s++) {
     dock.lengthMode = "fit";
     dock.hiding = "dodgewindows";
     dock.floating = true;
-    dock.addWidget("org.kde.plasma.icontasks");
+    // our own task manager with hover magnification when install.sh built it (dock/), the stock one otherwise
+    if (knownWidgetTypes.indexOf("org.liquidglass.icontasks") >= 0) {
+        var tasks = dock.addWidget("org.liquidglass.icontasks");
+        tasks.currentConfigGroup = ["General"];
+        tasks.writeConfig("magnification", 150);
+    } else {
+        dock.addWidget("org.kde.plasma.icontasks");
+    }
     var sp = dock.addWidget("org.kde.plasma.panelspacer");
     sp.currentConfigGroup = ["General"];
     sp.writeConfig("expanding", false);

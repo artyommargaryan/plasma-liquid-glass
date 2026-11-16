@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Undo install.sh: restore the original theme files, switch back to the stock blur, remove scripts and units.
-# The compiled effect stays in /usr; the last lines print how to remove it.
+# The compiled effect and the menu style plugin stay in /usr; the last lines print how to remove it.
 #   ./uninstall.sh --no-reload        change files and settings only, do not touch the running session
 #   ./uninstall.sh --restore-layout   also put back the panel layout saved by install.sh --layout
 set -uo pipefail
@@ -22,6 +22,12 @@ for v in WhiteSur WhiteSurDark; do
     [ -e "$p.pre-liquid-glass" ] && mv -f "$p.pre-liquid-glass" "$p" && echo "restored $p"
   done
 done
+PW="$DATA/plasma-liquid-glass/previous-widget-style"
+if [ "$(kreadconfig6 --file kdeglobals --group KDE --key widgetStyle)" = LiquidGlass ]; then
+  prev="$(cat "$PW" 2>/dev/null)"; [ -n "$prev" ] && [ "$prev" != LiquidGlass ] || prev=kvantum
+  kwriteconfig6 --notify --file kdeglobals --group KDE --key widgetStyle "$prev"; echo "widget style back to $prev"
+fi
+rm -f "$PW"
 rm -rf "$DATA/plasma/look-and-feel/org.liquidglass.whitesur" "$DATA/plasma/look-and-feel/org.liquidglass.whitesur-dark"
 PG="$DATA/plasma-liquid-glass/previous-global-themes"
 if [ -f "$PG" ]; then
@@ -59,4 +65,8 @@ echo
 echo "Stock blur is back on. Glass settings remain in kwinrc ([Effect-better-blur-dx]) but are unused;"
 echo "your kwinrc from before the install is at $CONF/kwinrc.pre-liquid-glass."
 [ -f "$SRC/build/install_manifest.txt" ] && echo "To remove the compiled effect:  sudo xargs rm -f < $SRC/build/install_manifest.txt"
+MSM="$DATA/plasma-liquid-glass/menu-style-build/install_manifest.txt"
+[ -f "$MSM" ] && echo "To remove the menu style:       sudo xargs rm -f < $MSM"
+DKM="$DATA/plasma-liquid-glass/dock-build/install_manifest.txt"
+[ -f "$DKM" ] && echo "To remove the dock widget:      sudo xargs rm -f < $DKM   (first swap it for the stock Icons-Only Task Manager in your dock)"
 echo "To remove the source:           rm -rf $DATA/plasma-liquid-glass"

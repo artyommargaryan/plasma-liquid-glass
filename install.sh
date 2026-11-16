@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # plasma-liquid-glass installer. Run as your normal user in a Plasma 6 Wayland session; asks for sudo
-# only to install build dependencies (Fedora) and the compiled KWin effect.
+# only to install build dependencies (Fedora), the compiled KWin effect, the menu style plugin and the dock widget.
 #   ./install.sh                 everything
 #   ./install.sh --skip-effect   theme files, scripts and settings only (effect already installed)
 #   ./install.sh --skip-deps     do not try to install build dependencies
@@ -32,6 +32,8 @@ command -v kwriteconfig6 >/dev/null || die "kwriteconfig6 not found - this needs
 command -v kwin_wayland  >/dev/null || die "kwin_wayland not found - this needs Plasma 6 on Wayland"
 QDBUS=1; command -v qdbus-qt6 >/dev/null || { QDBUS=0; warn "qdbus-qt6 not found (Fedora: qt6-qttools); the session will not be reloaded"; RELOAD=0; }
 
+QT_PLUGINS="$(qtpaths6 --query QT_INSTALL_PLUGINS 2>/dev/null || true)"
+
 # ---- 1. the KWin effect ----------------------------------------------------------------------------------------
 if [ "$SKIP_EFFECT" = 0 ]; then
   if [ "$SKIP_DEPS" = 0 ]; then
@@ -40,7 +42,8 @@ if [ "$SKIP_EFFECT" = 0 ]; then
       sudo dnf -y install git cmake extra-cmake-modules gcc-c++ kwin-devel kf6-kwindowsystem-devel plasma-workspace-devel \
         libplasma-devel qt6-qtbase-private-devel qt6-qtbase-devel kf6-knotifications-devel kf6-kio-devel kf6-kcrash-devel \
         kf6-ki18n-devel kf6-kguiaddons-devel libepoxy-devel kf6-kglobalaccel-devel kf6-kcmutils-devel \
-        kf6-kconfigwidgets-devel kf6-kdeclarative-devel kdecoration-devel wayland-devel libdrm-devel
+        kf6-kconfigwidgets-devel kf6-kdeclarative-devel kdecoration-devel wayland-devel libdrm-devel \
+        libksysguard-devel plasma-activities-devel plasma-activities-stats-devel kf6-kxmlgui-devel kf6-kservice-devel
     else
       warn "not a dnf system: install the build dependencies listed in the effect's README yourself, then re-run with --skip-deps"
       warn "  https://github.com/artyommargaryan/kwin-effects-better-blur-dx#building-from-source"
@@ -54,7 +57,32 @@ if [ "$SKIP_EFFECT" = 0 ]; then
   cmake --build "$SRC/build" -j"$(nproc)"
   say "Installing the effect (sudo)"
   sudo cmake --install "$SRC/build"
+
+  # ---- 1b. the menu style ("LiquidGlass" = Kvantum with the menu panel drawn by menu-style/) --------------------
+  say "Building the menu style"
+  MS="$DATA/plasma-liquid-glass/menu-style-build"
+  if [ -n "$QT_PLUGINS" ] \
+     && cmake -S "$HERE/menu-style" -B "$MS" -DCMAKE_BUILD_TYPE=Release -DMENU_STYLE_PLUGIN_DIR="$QT_PLUGINS/styles" >/dev/null \
+     && cmake --build "$MS" -j"$(nproc)"; then
+    say "Installing the menu style (sudo)"
+    sudo cmake --install "$MS" || warn "menu style not installed - menus stay plain Kvantum"
+  else warn "could not build the menu style (needs Qt 6 and KWindowSystem headers, qtpaths6) - menus stay plain Kvantum"; fi
+
+  # ---- 1c. the dock widget (Plasma's task manager with hover magnification, dock/) --------------------------------
+  # Its sources are Plasma 6.8's; another Plasma version gets the stock widget instead.
+  case "$(plasmashell --version 2>/dev/null)" in
+    *" 6.8."*)
+      say "Building the dock widget"
+      DK="$DATA/plasma-liquid-glass/dock-build"
+      if cmake -S "$HERE/dock" -B "$DK" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -Wno-dev >/dev/null \
+         && cmake --build "$DK" -j"$(nproc)"; then
+        say "Installing the dock widget (sudo)"
+        sudo cmake --install "$DK" || warn "dock widget not installed - the stock task manager is used"
+      else warn "could not build the dock widget (see dock/README.md) - the stock task manager is used"; fi ;;
+    *) warn "dock widget skipped: it is built for Plasma 6.8 ($(plasmashell --version 2>/dev/null)) - the stock task manager is used" ;;
+  esac
 fi
+MENU_STYLE=0; [ -n "$QT_PLUGINS" ] && [ -f "$QT_PLUGINS/styles/libliquidglassstyle.so" ] && MENU_STYLE=1
 
 # ---- 2. theme files --------------------------------------------------------------------------------------------
 say "Installing theme files"
@@ -107,7 +135,12 @@ say "Installing Global Themes"
 mkdir -p "$DATA/plasma/look-and-feel" "$DATA/plasma-liquid-glass"
 for d in "$HERE"/look-and-feel/*/; do
   n="$(basename "$d")"; rm -rf "$DATA/plasma/look-and-feel/$n"; cp -r "$d" "$DATA/plasma/look-and-feel/$n"; echo "installed $n"
+  [ "$MENU_STYLE" = 1 ] && sed -i 's/^widgetStyle=kvantum$/widgetStyle=LiquidGlass/' "$DATA/plasma/look-and-feel/$n/contents/defaults"
 done
+if [ "$MENU_STYLE" = 1 ]; then
+  [ -e "$DATA/plasma-liquid-glass/previous-widget-style" ] || kreadconfig6 --file kdeglobals --group KDE --key widgetStyle > "$DATA/plasma-liquid-glass/previous-widget-style"
+  kwriteconfig6 --notify --file kdeglobals --group KDE --key widgetStyle LiquidGlass
+fi
 if [ ! -e "$DATA/plasma-liquid-glass/previous-global-themes" ]; then
   { echo "DefaultLightLookAndFeel=$(kreadconfig6 --file kdeglobals --group KDE --key DefaultLightLookAndFeel)"
     echo "DefaultDarkLookAndFeel=$(kreadconfig6 --file kdeglobals --group KDE --key DefaultDarkLookAndFeel)"; } > "$DATA/plasma-liquid-glass/previous-global-themes"
@@ -149,6 +182,8 @@ while IFS='=' read -r k v; do
   case "$k" in ''|'#'*) continue ;; esac
   kwriteconfig6 --file kwinrc --group Effect-better-blur-dx --key "$k" "$v"
 done < "$HERE/glass-settings.conf"
+# the menu style draws a 16px corner; plain Kvantum menus keep the 10px from glass-settings.conf
+[ "$MENU_STYLE" = 1 ] && kwriteconfig6 --file kwinrc --group Effect-better-blur-dx --key MenuCornerRadius 16
 kwriteconfig6 --file kwinrc --group Plugins --key "${ID}Enabled" true
 kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled false
 case "$(kreadconfig6 --file kdeglobals --group General --key ColorScheme)" in *[Dd]ark*) mode=dark ;; *) mode=light ;; esac

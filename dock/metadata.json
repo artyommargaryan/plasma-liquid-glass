@@ -1,0 +1,21 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "hein@kde.org",
+                "Name": "Eike Hein"
+            }
+        ],
+        "Category": "Windows and Tasks",
+        "Description": "Plasma's task manager with dock hover magnification",
+        "EnabledByDefault": false,
+        "Icon": "preferences-system-windows",
+        "License": "GPL-2.0+",
+        "Name": "Task Manager (Liquid Glass)",
+        "Website": "https://github.com/artyommargaryan/plasma-liquid-glass"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-Provides": [
+        "org.kde.plasma.multitasking"
+    ]
+}
