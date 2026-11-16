@@ -193,6 +193,14 @@ Bluetooth, notification, brightness, media and volume widgets use.
 Bars take a click, a drag or the mouse wheel. Add it by hand with "Add or Manage Widgets", or let `--layout` put
 it next to the system tray.
 
+## Dolphin
+
+`./install.sh --dolphin` (or `tools/dolphin_finder.sh apply` at any time) moves Dolphin toward Finder with
+settings alone: the Places panel stays translucent glass while the file area becomes solid, the toolbar is back,
+forward, location, the three view modes, sort, search and the menu as icons, and the status bar is off.
+`tools/dolphin_finder.sh restore` puts everything back. The traffic lights stay in the title bar: Dolphin has no
+client-side decoration to put them into the sidebar.
+
 ## Known limits
 
 - The top bar is one glass strip, not separate pills, and buttons inside popups are not individually glass.
@@ -213,6 +221,7 @@ commands to remove the compiled effect and the menu style plugin from `/usr`.
 - [liquid-glass](https://github.com/ryohsuke1231/liquid-glass) (GNOME extension) and [hyprglass](https://github.com/hyprnux/hyprglass) — the look and the lens technique.
 - [macos-tahoe-liquid-kde](https://github.com/lestercorderomurillo/macos-tahoe-liquid-kde) by Lester Cordero Murillo — the menu style in `menu-style/` is adapted from its menu style plugin (GPL-3.0).
 - [plasma-desktop](https://invent.kde.org/plasma/plasma-desktop) by KDE — `dock/` is its task manager applet (GPL-2.0-or-later) with hover magnification added, see [`dock/README.md`](dock/README.md).
+- [Dolphin](https://invent.kde.org/system/dolphin) by KDE — `dolphin/dolphinui.rc` is its toolbar definition (GPL-2.0-or-later) with a different button set.
 - The Global Theme preview images show the KDE Plasma wallpaper *Hanabi* by Krystian Zajdel (CC-BY-SA-4.0).
 
 GPL-3.0, see [LICENSE](LICENSE).

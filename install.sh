@@ -7,12 +7,13 @@
 #   ./install.sh --no-reload     do not touch the running session (no shell restart, no effect load)
 #   ./install.sh --layout        also REPLACE your panels with a top bar and a floating dock on every screen
 #                                (previous layout is saved; ./uninstall.sh --restore-layout brings it back)
+#   ./install.sh --dolphin       also give Dolphin a Finder-like layout (glass sidebar, toolbar, no status bar)
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-SKIP_EFFECT=0; SKIP_DEPS=0; RELOAD=1; LAYOUT=0
+SKIP_EFFECT=0; SKIP_DEPS=0; RELOAD=1; LAYOUT=0; DOLPHIN=0
 for a in "$@"; do case "$a" in
-  --skip-effect) SKIP_EFFECT=1 ;; --skip-deps) SKIP_DEPS=1 ;; --no-reload) RELOAD=0 ;; --layout) LAYOUT=1 ;;
-  -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  --skip-effect) SKIP_EFFECT=1 ;; --skip-deps) SKIP_DEPS=1 ;; --no-reload) RELOAD=0 ;; --layout) LAYOUT=1 ;; --dolphin) DOLPHIN=1 ;;
+  -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
   *) echo "unknown option: $a" >&2; exit 2 ;;
 esac; done
 
@@ -132,6 +133,9 @@ else
     else rm -f "$svg.new" "$cfg.new"; warn "could not adapt $v (unexpected theme version?) - left as it was"; fi
   done
 fi
+
+# ---- 2b'. Dolphin (only when asked for; after the Kvantum step, which rewrites the same theme files) ----------------
+[ "$DOLPHIN" = 1 ] && { say "Giving Dolphin a Finder-like layout"; "$HERE/tools/dolphin_finder.sh" apply || warn "Dolphin layout not applied"; }
 
 # ---- 2c. Global Themes -------------------------------------------------------------------------------------------
 # Two entries for System Settings > Global Theme, registered as the light and dark theme of Plasma's Dark Mode

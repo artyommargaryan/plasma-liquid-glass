@@ -16,6 +16,8 @@ for t in WhiteSur WhiteSur-dark; do
   done
 done
 rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/ksvg-elements"
+# before the Kvantum files go back, so its backup of the one changed line is not applied to a restored file
+[ -e "$DATA/plasma-liquid-glass/dolphin-backup/done" ] && "$(cd "$(dirname "$0")" && pwd)/tools/dolphin_finder.sh" restore
 for v in WhiteSur WhiteSurDark; do
   for x in svg kvconfig; do
     p="$CONF/Kvantum/WhiteSur/$v.$x"
