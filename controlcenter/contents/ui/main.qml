@@ -21,8 +21,37 @@ import org.kde.plasma.private.volume as Volume
 PlasmoidItem {
     id: root
 
-    Plasmoid.icon: Plasmoid.configuration.icon
+    Plasmoid.icon: Plasmoid.configuration.icon.length > 0 ? Plasmoid.configuration.icon : "configure"
     toolTipMainText: i18n("Control Center")
+
+    // the button: the widget's own two-switches icon unless the config names another one
+    compactRepresentation: MouseArea {
+        id: button
+        readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
+        implicitWidth: vertical ? -1 : height
+        implicitHeight: vertical ? width : -1
+        Layout.minimumWidth: vertical ? -1 : height
+        Layout.minimumHeight: vertical ? width : -1
+        hoverEnabled: true
+        activeFocusOnTab: true
+        Accessible.role: Accessible.Button
+        Accessible.name: i18n("Control Center")
+        onClicked: root.expanded = !root.expanded
+        Keys.onReturnPressed: root.expanded = !root.expanded
+        Keys.onSpacePressed: root.expanded = !root.expanded
+
+        readonly property bool own: Plasmoid.configuration.icon.length === 0
+        Kirigami.Icon {
+            anchors.centerIn: parent
+            width: Math.min(parent.width, parent.height, Kirigami.Units.iconSizes.smallMedium)
+            height: width
+            source: button.own ? Qt.resolvedUrl("../icons/control-center.svg") : Plasmoid.configuration.icon
+            isMask: button.own
+            color: Kirigami.Theme.textColor
+            active: button.containsMouse
+            opacity: button.containsMouse || root.expanded ? 1 : 0.9
+        }
+    }
     toolTipSubText: i18n("Network, sound, display and more")
 
     // one grid unit of the tile layout, and the gap between tiles

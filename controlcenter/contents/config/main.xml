@@ -5,8 +5,8 @@
   <kcfgfile name=""/>
   <group name="General">
     <entry name="icon" type="String">
-      <label>Icon of the panel button.</label>
-      <default>configure</default>
+      <label>Icon of the panel button: an icon name, or empty for the widget's own two-switches icon.</label>
+      <default></default>
     </entry>
     <entry name="previewPage" type="String">
       <label>For screenshots and tests: the page to show when previewOpen opens the panel ("bluetooth", "notifications" or empty).</label>

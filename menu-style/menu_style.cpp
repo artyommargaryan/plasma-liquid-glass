@@ -8,8 +8,11 @@
 // Adapted from the menu style of macos-tahoe-liquid-kde,
 // Copyright (C) 2026 Lester Cordero Murillo, https://github.com/lestercorderomurillo/macos-tahoe-liquid-kde
 // Changes for plasma-liquid-glass: circular corners of a configurable radius (so the compositor's rounded cut
-// can follow them), fainter shadow, no dark outline, any Kvantum theme listed in LIQUIDGLASS_MENU_THEMES.
+// can follow them), fainter shadow, no dark outline, any Kvantum theme listed in LIQUIDGLASS_MENU_THEMES,
+// one-colour menu icons redrawn in the menu text colour when they would be dark on dark (or light on light).
 #include <QApplication>
+#include <QFile>
+#include <QHash>
 #include <QMenu>
 #include <QPainter>
 #include <QPainterPath>
@@ -48,18 +51,103 @@ QPainterPath contour(const QRectF &rect, qreal radius)
     return path;
 }
 
+// Kvantum's theme name ("WhiteSur", "WhiteSurDark"...) from the user's Kvantum config.
+QString kvantumTheme()
+{
+    const auto config = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+    return QSettings(config + "/Kvantum/kvantum.kvconfig", QSettings::IniFormat).value("theme").toString();
+}
+
+// The colour Kvantum draws menu item text in: text.normal.color of [MenuItem] in the theme's .kvconfig.
+// A theme "FooDark" lives in the directory of "Foo". Invalid when it cannot be found.
+QColor menuTextColor(const QString &theme)
+{
+    static QHash<QString, QColor> cache;
+    const auto known = cache.constFind(theme);
+    if (known != cache.constEnd()) return *known;
+    QColor color;
+    QStringList dirs{theme};
+    if (theme.endsWith("Dark")) dirs << theme.chopped(4);
+    QStringList roots{QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/Kvantum"};
+    for (const QString &data : QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation)) roots << data + "/Kvantum";
+    for (const QString &root : std::as_const(roots)) {
+        for (const QString &dir : std::as_const(dirs)) {
+            const QString path = root + '/' + dir + '/' + theme + ".kvconfig";
+            if (!QFile::exists(path)) continue;
+            QSettings settings(path, QSettings::IniFormat);
+            color = QColor(settings.value("MenuItem/text.normal.color").toString());
+            if (color.isValid()) break;
+        }
+        if (color.isValid()) break;
+    }
+    cache.insert(theme, color);
+    return color;
+}
+
+int luma(const QColor &c) { return (c.red() * 299 + c.green() * 587 + c.blue() * 114) / 1000; }
+
+// A one-colour icon that would be hard to see next to the menu text - a dark outline icon of a light icon theme
+// on a dark glass menu, or the reverse - redrawn in the text colour. Colourful icons are returned unchanged.
+QIcon readableIcon(const QIcon &icon, const QSize &size, qreal ratio, const QColor &text)
+{
+    static QHash<quint64, QIcon> cache;
+    const quint64 key = quint64(icon.cacheKey()) ^ (quint64(text.rgba()) << 32) ^ quint64(size.width() * 131 + int(ratio * 16));
+    const auto known = cache.constFind(key);
+    if (known != cache.constEnd()) return *known;
+    QImage image = icon.pixmap(size, ratio).toImage().convertToFormat(QImage::Format_ARGB32);
+    qint64 sum = 0, count = 0;
+    bool plain = !image.isNull();
+    for (int y = 0; plain && y < image.height(); ++y) {
+        const QRgb *row = reinterpret_cast<const QRgb *>(image.constScanLine(y));
+        for (int x = 0; x < image.width(); ++x) {
+            if (qAlpha(row[x]) < 48) continue;
+            const int hi = qMax(qRed(row[x]), qMax(qGreen(row[x]), qBlue(row[x])));
+            const int lo = qMin(qRed(row[x]), qMin(qGreen(row[x]), qBlue(row[x])));
+            if (hi - lo > 36) { plain = false; break; }
+            sum += (qRed(row[x]) * 299 + qGreen(row[x]) * 587 + qBlue(row[x]) * 114) / 1000;
+            ++count;
+        }
+    }
+    QIcon result = icon;
+    if (plain && count > 0 && qAbs(int(sum / count) - luma(text)) > 110) {
+        QPainter tint(&image);
+        tint.setCompositionMode(QPainter::CompositionMode_SourceIn);
+        tint.fillRect(image.rect(), text);
+        tint.end();
+        QPixmap pixmap = QPixmap::fromImage(image);
+        pixmap.setDevicePixelRatio(ratio);
+        result = QIcon(pixmap);
+    }
+    if (cache.size() > 512) cache.clear();
+    cache.insert(key, result);
+    return result;
+}
+
 class MenuStyle final : public QProxyStyle {
 public:
     explicit MenuStyle(QStyle *base) : QProxyStyle(base) {}
     bool themed(const QWidget *widget) const {
         if (!qobject_cast<const QMenu *>(widget) || widget->testAttribute(Qt::WA_StyleSheetTarget)) return false;
-        const auto config = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
-        QSettings settings(config + "/Kvantum/kvantum.kvconfig", QSettings::IniFormat);
-        const QString theme = settings.value("theme").toString();
+        const QString theme = kvantumTheme();
         const QString wanted = qEnvironmentVariable("LIQUIDGLASS_MENU_THEMES", QStringLiteral("WhiteSur"));
         for (const QString &prefix : wanted.split(',', Qt::SkipEmptyParts))
             if (theme.startsWith(prefix.trimmed())) return true;
         return false;
+    }
+    void drawControl(ControlElement element, const QStyleOption *option,
+                     QPainter *painter, const QWidget *widget) const override {
+        if (element == CE_MenuItem && themed(widget)) {
+            const auto *item = qstyleoption_cast<const QStyleOptionMenuItem *>(option);
+            const QColor text = menuTextColor(kvantumTheme());
+            if (item && !item->icon.isNull() && text.isValid()) {
+                QStyleOptionMenuItem copy(*item);
+                const int extent = baseStyle()->pixelMetric(PM_SmallIconSize, option, widget);
+                copy.icon = readableIcon(item->icon, QSize(extent, extent), widget ? widget->devicePixelRatioF() : qApp->devicePixelRatio(), text);
+                QProxyStyle::drawControl(element, &copy, painter, widget);
+                return;
+            }
+        }
+        QProxyStyle::drawControl(element, option, painter, widget);
     }
     int pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const override {
         const int value = QProxyStyle::pixelMetric(metric, option, widget);

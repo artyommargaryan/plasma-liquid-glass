@@ -134,7 +134,9 @@ hands KWin a blur shape cut from the same outline. Kvantum alone caps the blur c
 frame art. The body colour still comes from the Kvantum theme, so the steps below still apply. It acts when the
 active Kvantum theme's name starts with `WhiteSur`; list others in `LIQUIDGLASS_MENU_THEMES` (comma separated).
 Other knobs, all environment variables: `LIQUIDGLASS_MENU_RADIUS` (16), `LIQUIDGLASS_MENU_INSET` (5),
-`LIQUIDGLASS_MENU_SHADOW` (4), `LIQUIDGLASS_MENU_LINE` (56). After a Qt update that changes the plugin ABI,
+`LIQUIDGLASS_MENU_SHADOW` (4), `LIQUIDGLASS_MENU_LINE` (56). One-colour menu icons that would be dark on a dark
+menu (a light icon theme on dark glass) or light on a light one are redrawn in the menu text colour; colourful
+icons are left alone. After a Qt update that changes the plugin ABI,
 re-run `./install.sh`.
 
 Without the plugin (it failed to build, or `--skip-effect` on a system that never had it) menus stay plain
@@ -151,7 +153,8 @@ shell for global-menu popups, to see it. Shadow strength: `KV_SHADOW` (default 0
 The body colour and translucency are set with `KV_FILL` and `KV_FILLOP` (defaults: the theme's own colour at 0.2).
 For a light theme whose Plasma popups are dark glass with light text, give the menu the same tint as the popup
 frame (for example `KV_FILL='#f4f4f4' KV_FILLOP=0.16`) and set `text.normal.color` and
-`text.normal.inactive.color` to a light colour in `[Menu]` and `[MenuItem]`. Icons from a light icon theme stay dark.
+`text.normal.inactive.color` to a light colour in `[Menu]` and `[MenuItem]`. With plain Kvantum, icons from a light
+icon theme stay dark; the menu style plugin recolours them.
 
 After replacing a theme file: `rm ~/.cache/ksvg-elements` and `systemctl --user restart plasma-plasmashell.service`.
 Switching the Plasma theme away and back is not enough.
