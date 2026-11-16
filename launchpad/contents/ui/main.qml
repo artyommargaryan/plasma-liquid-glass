@@ -4,6 +4,7 @@
 // (org.kde.plasma.private.kicker), so there is nothing to compile.
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
@@ -15,6 +16,8 @@ PlasmoidItem {
     readonly property Kicker.KAStatsFavoritesModel favorites: rootModel.favoritesModel as Kicker.KAStatsFavoritesModel
 
     preferredRepresentation: fullRepresentation
+    // take the whole thickness of the panel, like the task manager does, instead of the inset a panel gives small widgets
+    Plasmoid.constraintHints: Plasmoid.CanFillArea
     Plasmoid.icon: Plasmoid.configuration.icon
     toolTipMainText: i18n("Launchpad")
     toolTipSubText: i18n("Find and open applications")
@@ -25,6 +28,11 @@ PlasmoidItem {
         readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
         implicitWidth: vertical ? -1 : height
         implicitHeight: vertical ? width : -1
+        // a square the full thickness of the panel, so in a dock it is as large as the app icons beside it
+        Layout.minimumWidth: vertical ? -1 : height
+        Layout.preferredWidth: vertical ? -1 : height
+        Layout.minimumHeight: vertical ? width : -1
+        Layout.preferredHeight: vertical ? width : -1
         hoverEnabled: true
         activeFocusOnTab: true
         Accessible.role: Accessible.Button
@@ -34,7 +42,11 @@ PlasmoidItem {
         Keys.onSpacePressed: root.toggle()
         Kirigami.Icon {
             anchors.fill: parent
+            // thin bars use the whole height; on a dock leave the margin its app icons have
+            anchors.margins: Math.min(parent.width, parent.height) > Kirigami.Units.iconSizes.medium ? Math.round(Math.min(parent.width, parent.height) * 0.06) : Math.round(Math.min(parent.width, parent.height) * 0.16)
             source: Plasmoid.icon
+            // draw at the item's own size: by default an icon snaps down to the next standard size (32, 48...)
+            roundToIconSize: false
             active: button.containsMouse
         }
     }

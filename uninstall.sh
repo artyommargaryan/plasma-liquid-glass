@@ -34,6 +34,9 @@ rm -f "$PW"
 if grep -q 'plugin=org.liquidglass.launchpad' "$CONF/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null; then
   echo "Launchpad widget kept: a panel still uses it (swap it for another launcher, then remove $DATA/plasma/plasmoids/org.liquidglass.launchpad)"
 else rm -rf "$DATA/plasma/plasmoids/org.liquidglass.launchpad"; fi
+if grep -q 'plugin=org.liquidglass.systemmenu' "$CONF/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null; then
+  echo "System Menu widget kept: a panel still uses it (remove it from the panel, then remove $DATA/plasma/plasmoids/org.liquidglass.systemmenu)"
+else rm -rf "$DATA/plasma/plasmoids/org.liquidglass.systemmenu"; fi
 if grep -q 'plugin=org.liquidglass.controlcenter' "$CONF/plasma-org.kde.plasma.desktop-appletsrc" 2>/dev/null; then
   echo "Control Center widget kept: a panel still uses it (remove it from the panel, then remove $DATA/plasma/plasmoids/org.liquidglass.controlcenter)"
 else rm -rf "$DATA/plasma/plasmoids/org.liquidglass.controlcenter"; fi

@@ -105,11 +105,13 @@ for t in WhiteSur WhiteSur-dark; do
 done
 rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/ksvg-elements"
 
-# ---- 2a. Launchpad and Control Center widgets (pure QML, nothing to compile) -----------------------------------------------------------
+# ---- 2a. Launchpad, Control Center and System Menu widgets (pure QML, nothing to compile) -----------------------------------------------------------
 mkdir -p "$DATA/plasma/plasmoids"; rm -rf "$DATA/plasma/plasmoids/org.liquidglass.launchpad"
 cp -r "$HERE/launchpad" "$DATA/plasma/plasmoids/org.liquidglass.launchpad"; echo "installed the Launchpad widget"
 rm -rf "$DATA/plasma/plasmoids/org.liquidglass.controlcenter"
 cp -r "$HERE/controlcenter" "$DATA/plasma/plasmoids/org.liquidglass.controlcenter"; echo "installed the Control Center widget"
+rm -rf "$DATA/plasma/plasmoids/org.liquidglass.systemmenu"
+cp -r "$HERE/systemmenu" "$DATA/plasma/plasmoids/org.liquidglass.systemmenu"; echo "installed the System Menu widget"
 
 # ---- 2b. application menus (Kvantum) -----------------------------------------------------------------------------
 # Menus are drawn by Kvantum, not by the Plasma theme: give the WhiteSur Kvantum theme a matching glass menu frame.

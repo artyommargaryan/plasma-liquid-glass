@@ -66,6 +66,7 @@ What it changes:
 | Menu style plugin `libliquidglassstyle.so`, widget style `LiquidGlass` | Qt plugin dir (`…/qt6/plugins/styles`), `~/.config/kdeglobals` | previous style in `~/.local/share/plasma-liquid-glass/previous-widget-style` |
 | Dock widget "Icons-Only Task Manager (Liquid Glass)" with hover magnification (Plasma 6.8 only; used by `--layout`) | `/usr` (Plasma applet dirs) | — |
 | Launchpad widget "Launchpad (Liquid Glass)" (used by `--layout`) | `~/.local/share/plasma/plasmoids/org.liquidglass.launchpad` | — |
+| System Menu widget "System Menu (Liquid Glass)" (used by `--layout`) | `~/.local/share/plasma/plasmoids/org.liquidglass.systemmenu` | — |
 | Control Center widget "Control Center (Liquid Glass)" (used by `--layout`) | `~/.local/share/plasma/plasmoids/org.liquidglass.controlcenter` | — |
 | Effect source | `~/.local/share/plasma-liquid-glass/kwin-effect` | — |
 | Popup and dock artwork | `~/.local/share/plasma/desktoptheme/WhiteSur{,-dark}/` | `*.pre-liquid-glass` next to each file |
@@ -182,7 +183,7 @@ pure QML on Plasma's own launcher models, so favourites are the ones Plasma alre
   Typing filters it, Enter or a click makes the selected entry the current clipboard, Delete removes it,
   Esc goes back to the apps.
 - It answers the Meta key like any Plasma launcher. Add it by hand with "Add or Manage Widgets", or let
-  `--layout` put it in the top bar.
+  `--layout` put it at the start of the dock, where its button is as large as the app icons.
 - `columns` and `rows` in its config set the grid size (7 x 3 by default).
 
 ## Control Center
@@ -212,6 +213,14 @@ settings alone: the Places panel stays translucent glass while the file area bec
 forward, location, the three view modes, sort, search and the menu as icons, and the status bar is off.
 `tools/dolphin_finder.sh restore` puts everything back. The traffic lights stay in the title bar: Dolphin has no
 client-side decoration to put them into the sidebar.
+
+## System Menu
+
+[`systemmenu/`](systemmenu) is a logo button for the start of the top bar. Its menu holds what concerns the whole
+computer: About This Computer, System Settings, Software (Discover, or the command in its `softwareCommand`
+setting), Force Quit (KWin's kill-window cross), Sleep, Restart, Shut Down, Lock Screen and Log Out. Restart,
+Shut Down and Log Out go through Plasma's own confirmation screen. It is a native menu, so it gets the same glass
+as every other menu. The logo is the `icon` setting (`start-here-kde-symbolic` by default).
 
 ## Known limits
 

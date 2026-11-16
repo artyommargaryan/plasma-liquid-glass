@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Category": "System Information",
+        "Description": "A logo button with the system menu: about, settings, software, force quit, sleep, restart, shut down, lock and log out",
+        "Icon": "start-here-kde-symbolic",
+        "Id": "org.liquidglass.systemmenu",
+        "License": "GPL-3.0-or-later",
+        "Name": "System Menu (Liquid Glass)",
+        "Website": "https://github.com/artyommargaryan/plasma-liquid-glass"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
