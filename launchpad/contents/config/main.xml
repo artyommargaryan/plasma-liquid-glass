@@ -21,8 +21,8 @@
       <max>6</max>
     </entry>
     <entry name="backdrop" type="Bool">
-      <label>Tint the panel and the search pill: solid along the top, clearing towards the bottom.</label>
-      <default>true</default>
+      <label>Tint the panel and the search pill: solid along the top, clearing towards the bottom. Off by default: the popup background of the installed Plasma themes already has this fade. Turn it on with a theme that has none.</label>
+      <default>false</default>
     </entry>
     <entry name="backdropRadius" type="Int">
       <label>Corner radius the tint is drawn with; match the popup radius of the Plasma theme.</label>

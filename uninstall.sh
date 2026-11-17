@@ -10,7 +10,7 @@ ID=better_blur_dx_local
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"; CONF="${XDG_CONFIG_HOME:-$HOME/.config}"; BIN="$HOME/.local/bin"
 E="qdbus-qt6 org.kde.KWin /Effects org.kde.kwin.Effects"
 for t in WhiteSur WhiteSur-dark; do
-  for f in dialogs/background.svgz widgets/panel-background.svgz; do
+  for f in dialogs/background.svgz widgets/panel-background.svgz widgets/tooltip.svgz colors; do
     p="$DATA/plasma/desktoptheme/$t/$f"
     [ -e "$p.pre-liquid-glass" ] && mv -f "$p.pre-liquid-glass" "$p" && echo "restored $p"
   done

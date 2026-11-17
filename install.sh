@@ -105,7 +105,9 @@ for t in WhiteSur WhiteSur-dark; do
       mkdir -p "$(dirname "$dst")"; cp -r "/usr/share/plasma/desktoptheme/$t" "$dst"; echo "copied system theme $t to $dst"
     else warn "Plasma theme $t is not installed - skipped (get it from https://github.com/vinceliuice/WhiteSur-kde)"; continue; fi
   fi
-  for f in dialogs/background.svgz widgets/panel-background.svgz; do
+  # the light theme also gets its own text colours: its glass is light, so the text on it is dark
+  files="dialogs/background.svgz widgets/panel-background.svgz widgets/tooltip.svgz"; [ "$t" = WhiteSur ] && files="$files colors"
+  for f in $files; do
     mkdir -p "$dst/$(dirname "$f")"
     # keep the very first original only, so re-running the installer never overwrites it
     [ -e "$dst/$f" ] && [ ! -e "$dst/$f.pre-liquid-glass" ] && cp "$dst/$f" "$dst/$f.pre-liquid-glass"
@@ -137,8 +139,8 @@ else
     svg="$KV/$v.svg"; cfg="$KV/$v.kvconfig"
     { [ -f "$svg" ] && [ -f "$cfg" ]; } || { warn "$v.svg / $v.kvconfig missing in $KV - skipped"; continue; }
     for f in "$svg" "$cfg"; do [ -e "$f.pre-liquid-glass" ] || cp "$f" "$f.pre-liquid-glass"; done
-    # body tint = the popup frame of the matching Plasma theme; the light theme's popups are dark glass with light text
-    if [ "$v" = WhiteSurDark ]; then fill='#1c1c1e'; op=0.18; textopt=""; else fill='#f4f4f4'; op=0.16; textopt="--light-text"; fi
+    # dark menus are dark glass; light menus are light frosted glass and keep the theme's dark text
+    if [ "$v" = WhiteSurDark ]; then fill='#1c1c1e'; op=0.18; textopt=""; else fill='#f7f7f9'; op=0.66; textopt=""; fi
     if KV_FILL="$fill" KV_FILLOP="$op" python3 "$HERE/tools/kv_menu.py" 8 "$svg.pre-liquid-glass" "$svg.new" 0 0 4 >/dev/null \
        && python3 "$HERE/tools/kv_config.py" "$cfg.pre-liquid-glass" "$cfg.new" $textopt; then
       mv -f "$svg.new" "$svg"; mv -f "$cfg.new" "$cfg"; echo "menu frame installed in $v"
@@ -209,7 +211,12 @@ done < "$HERE/glass-settings.conf"
 kwriteconfig6 --file kwinrc --group Plugins --key "${ID}Enabled" true
 kwriteconfig6 --file kwinrc --group Plugins --key blurEnabled false
 case "$(kreadconfig6 --file kdeglobals --group General --key ColorScheme)" in *[Dd]ark*) mode=dark ;; *) mode=light ;; esac
-[ "$mode" = light ] && kwriteconfig6 --file kwinrc --group Effect-better-blur-dx --key GlassLumaCeiling 35
+# light mode is light frosted glass with dark text: no dimming, no dark gradient, and a frosted top bar
+if [ "$mode" = light ]; then
+  for kv in GlassLumaCeiling=100 GlassShadeTop=0 GlassShadeBottom=0 ClearEdgeBars=false; do
+    kwriteconfig6 --file kwinrc --group Effect-better-blur-dx --key "${kv%=*}" "${kv#*=}"
+  done
+fi
 mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}"; echo "$mode" > "${XDG_STATE_HOME:-$HOME/.local/state}/macos-theme-mode"
 
 # ---- 5. reload the session -------------------------------------------------------------------------------------

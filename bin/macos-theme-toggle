@@ -81,12 +81,17 @@ command -v gsettings >/dev/null && gsettings set org.gnome.desktop.interface col
 #    The values in use are remembered for the mode being left (so slider tuning sticks),
 #    then the other mode's values are applied. Store: ~/.config/glassblurmodesrc
 GLASS_ID=better_blur_dx_local
-GLASS_KEYS="BlurStrength DockBlurStrength Brightness Contrast Saturation RimStrength RimBackStrength InnerShade GlassLumaCeiling"
+GLASS_KEYS="BlurStrength DockBlurStrength Brightness Contrast Saturation RimStrength RimBackStrength InnerShade GlassLumaCeiling GlassShadeTop GlassShadeBottom ClearEdgeBars"
 glass_default() { # mode key
   case "$1:$2" in
     *:BlurStrength) echo 5 ;; *:DockBlurStrength) echo 3 ;; *:Brightness) echo 95 ;; *:Contrast) echo 90 ;;
     *:Saturation) echo 160 ;; *:RimStrength) echo 150 ;; *:RimBackStrength) echo 45 ;; *:InnerShade) echo 0 ;;
-    dark:GlassLumaCeiling) echo 45 ;; light:GlassLumaCeiling) echo 35 ;;
+    # dark: dark glass that dims bright backdrops, popups darker at the top, a clear top bar
+    # light: light frosted glass with dark text - no dimming, no dark gradient, and a frosted top bar
+    dark:GlassLumaCeiling) echo 45 ;; light:GlassLumaCeiling) echo 100 ;;
+    dark:GlassShadeTop) echo 55 ;; light:GlassShadeTop) echo 0 ;;
+    *:GlassShadeBottom) echo 0 ;;
+    dark:ClearEdgeBars) echo true ;; light:ClearEdgeBars) echo false ;;
   esac
 }
 if [ "$(kreadconfig6 --file kwinrc --group Plugins --key "${GLASS_ID}Enabled" 2>/dev/null)" = "true" ]; then

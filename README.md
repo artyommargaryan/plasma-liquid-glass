@@ -162,9 +162,9 @@ Kvantum: the installer adapts the WhiteSur Kvantum theme (light and dark) so men
 shell for global-menu popups, to see it. Shadow strength: `KV_SHADOW` (default 0.1).
 
 The body colour and translucency are set with `KV_FILL` and `KV_FILLOP` (defaults: the theme's own colour at 0.2).
-For a light theme whose Plasma popups are dark glass with light text, give the menu the same tint as the popup
-frame (for example `KV_FILL='#f4f4f4' KV_FILLOP=0.16`) and set `text.normal.color` and
-`text.normal.inactive.color` to a light colour in `[Menu]` and `[MenuItem]`. With plain Kvantum, icons from a light
+The installer uses `#1c1c1e` at 0.18 for the dark theme and `#f7f7f9` at 0.66 for the light one, which keeps its
+dark menu text. If you put light menus on dark glass instead, also set `text.normal.color` and
+`text.normal.inactive.color` to a light colour in `[Menu]` and `[MenuItem]` (`kv_config.py --light-text`). With plain Kvantum, icons from a light
 icon theme stay dark; the menu style plugin recolours them.
 
 After replacing a theme file: `rm ~/.cache/ksvg-elements` and `systemctl --user restart plasma-plasmashell.service`.
@@ -232,7 +232,9 @@ as every other menu. The logo is the `icon` setting (`start-here-kde-symbolic` b
 
 - The top bar is one strip of clear glass, not separate pills, and buttons inside popups are not individually glass.
 - Apps that set their own colours (browsers, terminals) do not follow the light/dark switch.
-- The light theme draws white text, so the glass dims bright backdrops to keep it readable.
+- Popups fade from a solid tint at the top to clear glass at the bottom, so text low in a popup can be hard to
+  read over a wallpaper of the opposite brightness (dark text over a dark wallpaper in light mode).
+- The screenshots above predate the light-glass light mode and the popup fade.
 
 ## Uninstall
 
